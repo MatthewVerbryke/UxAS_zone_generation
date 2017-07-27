@@ -5,24 +5,85 @@
 # Additional copyright may be held by others, as reflected in the commit history.
 
 
+from get_uav_data import parseAllFiles
 import PIL
 from PIL import Image
+import sys
+import os
 
 
 
-img = Image.open('uav_2_pzones.png')
-img_size = img.size
+class createBorder():
+    
+    def __init__(self):
+        
+        # Get cwd
+        self.setdir = os.getcwd()
+            
+        # Command line arguments
+        self.scenario_path = sys.argv[1]
+        self.img_path = sys.argv[2]
+        
+        # Get relevant UAV data from UxAS scenario files
+        self.uxas_data = parseAllFiles(self.scenario_path)
+        
+        # Set number of UAVs
+        self.uav_tot = self.uxas_data[0]
+        
+        # Change directory to image storage location
+        os.chdir(self.img_path)
+        
+        # Run program
+        self.main()
+    
+    
+    #ADD BORDER TO GIVEN IMAGE
+    def addBorder(self, img_name, i):
+        
+        # Open the image
+        img = Image.open(img_name)
 
+        # Get image size
+        img_size, height = img.size
 
-img_border_size = []
-for i in range(0,2):
-    img_border_size.append(img_size[i] + 2)
+        # New image has a single pixel border all the way around
+        img_border_size = img_size + 2
 
+        # Create new empty image for bordered image
+        img_border = Image.new('L', [img_border_size,img_border_size])
 
-img_border = Image.new('L', img_border_size)
+        # Paste the old image in the center of the empty new one
+        img_border.paste(img, ((img_border_size - img_size)/2, (img_border_size - img_size)/2))
 
+        # Save this bordered image
+        img_border.save(img_name)
+        
+        # Close image
+        img.close()
+        
+    
+    #MAIN PROGRAM
+    def main(self):
+        try:
+        
+            # Loop through all "p-zone" images
+            for i in range(0,self.uav_tot):
+                
+                # Get current UAV ID
+                current_uav = self.uxas_data[i+1][0]
+                
+                # Open the heightmap image
+                img_name = '{}_pzones.png'.format(current_uav)
+                
+                # Add border to image
+                self.addBorder(img_name, i)
 
-img_border.paste(img, ((img_border_size[0] - img_size[0])/2, (img_border_size[1] - img_size[1])/2))
+        finally:
+            
+            # Switch back to the cwd
+            os.chdir(self.setdir)
 
-
-img_border.save('uav_2_pzones.png')
+if __name__ == "__main__":
+    createBorder()
+    
+#EOF
