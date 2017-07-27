@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 #CONSTANTS
 # Get image name
-img_name = 'uav_2_pzones.png'
+img_name = 'uav_1_pzones.png'
 
 # Get image size
 img_size = 259
