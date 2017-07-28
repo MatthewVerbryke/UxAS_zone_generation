@@ -1,0 +1,6 @@
+      <Location3D Series="CMASI">
+         <Latitude>$LATITUDE$</Latitude>
+         <Longitude>$LONGITUDE$</Longitude>
+         <Altitude>0.0</Altitude>
+         <AltitudeType>MSL</AltitudeType>
+      </Location3D>

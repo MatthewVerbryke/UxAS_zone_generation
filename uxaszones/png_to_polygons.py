@@ -10,6 +10,7 @@ from math import tan, radians
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from output import uxasZoneOutput
 import PIL
 from PIL import Image
 from read_csv import readCSVInput
@@ -31,6 +32,7 @@ class pngToPolygons():
         self.scenario_path = sys.argv[1]
         self.img_path = sys.argv[2]
         img_name = sys.argv[3] + '.png'
+        self.abs_path = sys.argv[4]
         
         # Get relevant UAV data from UxAS scenario files
         uxas_data = parseAllFiles(self.scenario_path)
@@ -38,8 +40,9 @@ class pngToPolygons():
         # Set number of UAVs
         self.uav_tot = uxas_data[0]
         
-        # Get image actual side length        
+        # Get image information (real world side length, heightrange)        
         img_len = readCSVInput(self.img_path, 'side_length')
+        self.height_range = readCSVInput(self.img_path, 'heights')
         
         # Get image size
         os.chdir(self.img_path)
@@ -49,8 +52,8 @@ class pngToPolygons():
         img.close     
            
         gravity = 9.81 #m/s^2
-        self.buff_dist = [0]*self.uav_tot
-        self.ID = [0]*self.uav_tot
+        self.buff_dist = [None]*self.uav_tot
+        self.ID = [None]*self.uav_tot
         
         # Determine UAV turn radii from scenario data
         for i in range(0,self.uav_tot):
@@ -66,10 +69,17 @@ class pngToPolygons():
         
         # Maximum number of vertices per polygon allowed
         self.verts_max = 64
+        
+        # Sort UxAS data based on altitude
+        uav_data = uxas_data
+        uav_data.pop(0)
+        self.sorted_uxas_data = sorted(uav_data, key=lambda uav: uav[1])
+        
+        # Initialize zone count variable
+        self.zone_count = 1
     
         # Run main program
         self.main()
- 
  
  
     #CREATE POLYGONS FROM HEIGHTMAP IMAGE CONTOURS
@@ -87,24 +97,21 @@ class pngToPolygons():
         # Find the number of individual shapes in the file
         cont_points_len = len(cont_points)
 
-        polygons = []
+        polygons = [None]*cont_points_len
 
         # Create polygons from contours
         for i in range(0,cont_points_len):
             poly_point_un = cont_points[i]
             poly_point_len = len(poly_point_un)
 
-            poly_points = []
+            poly_points = [None]*poly_point_len
 
             # Correct the orientation of the contours so they match the png
             for j in range(0,poly_point_len):
-                poly_points.append([(poly_point_un[j][1]), poly_point_un[j][0]])
+                poly_points[j] = [(poly_point_un[j][1]), poly_point_un[j][0]]
 
             # Create shapely polygon from corrected contours
-            polygon = Polygon(poly_points)
-
-            # Store this polygon in the "polygons" list
-            polygons.append(polygon)
+            polygons[i] = Polygon(poly_points)
 
         return polygons
 
@@ -149,13 +156,12 @@ class pngToPolygons():
     #CREATE BUFFER AROUND POLYGONS
     def bufferPolygons(self, polys_in, uav_number):
 
-        polys_out = []
         poly_num = len(polys_in)
+        polys_out = [None]*poly_num
 
         # Buffer polygons
         for i in range(0,poly_num):
-            poly_now = polys_in[i].buffer(self.buff_dist[uav_number])
-            polys_out.append(poly_now)
+            polys_out[i] = polys_in[i].buffer(self.buff_dist[uav_number])
 
         return polys_out
 
@@ -163,8 +169,8 @@ class pngToPolygons():
     #CROP POLYGONS INTO IMAGE FRAME
     def cropPolygons(self, polys_in, bounds):
 
-        polys_out = []
         poly_num = len(polys_in)
+        polys_out = []
 
         # Crop polygons
         for i in range(0,poly_num):
@@ -239,43 +245,43 @@ class pngToPolygons():
     #CREATE CONVEX POLYGON FROM CONCAVE POLYGONS
     def concaveToConvex(self, polys_in):
         
-        polys_out = []
         poly_num = len(polys_in)
+        polys_out = [None]*poly_num
         
         # Create convex hull from Shapely multipoint object
         for i in range(0,poly_num):
             poly_points = list(polys_in[i].exterior.coords)
             poly_multipoints = MultiPoint(poly_points)
-            poly_now = poly_multipoints.convex_hull
-            polys_out.append(poly_now)
+            polys_out[i] = poly_multipoints.convex_hull
+            
         return polys_out
         
 
     #SIMPLIFY POLYGONS
     def simplifyPolygons(self, polys_in):
         
-        polys_out = []
+        
         poly_num = len(polys_in)
+        polys_out = [None]*poly_num
         simp_factor = 0.01
-
+        
         # Simplify the polygons with the "simp_factor"
         for i in range(0,poly_num):
-            poly_in_points = list(polys_in[i].exterior.coords)# print(len(poly_in_points))
+            poly_in_points = list(polys_in[i].exterior.coords)
             if (len(poly_in_points) >= self.verts_max): 
-                poly_now = polys_in[i].simplify(simp_factor)
-                polys_out.append(poly_now)
+                polys_out[i] = polys_in[i].simplify(simp_factor)
                 
                 # Verify the simplified number of points are valid
                 poly_now_points = list(poly_now.exterior.coords)
                 verts_num = (len(poly_now_points))
-                if (verts_num < self.verts_max) and ((verts_num > 2)):
+                if (verts_num < self.verts_max) and (verts_num > 2):
                     pass
                 else:
                     print("\nAt least one polygon has an invalid number of points.")
                     print("Pick a different simplification factor and try again.\n")
                     exit()
             else:
-                polys_out.append(polys_in[i])
+                polys_out[i] = polys_in[i]
             
         return polys_out
         
@@ -304,7 +310,6 @@ class pngToPolygons():
     #PRINT POLYGONS
     def printPolygons(self, polys_in):
         
-        poly_outlines = []
         poly_num = len(polys_in)
         
         #prepare each polygon for printing
@@ -312,6 +317,26 @@ class pngToPolygons():
             poly_outline = list(polys_in[i].exterior.coords)
             poly_outlines = np.array(poly_outline)
             plt.plot(poly_outlines[:,1], poly_outlines[:,0])
+            
+            
+    #OUTPUT POLYGONS AS FILES
+        
+            
+    #OUTPUT POLYGONS AS UXAS ZONES
+    def outputPolygons(self, polys_in, n):
+        
+        poly_num = len(polys_in)
+        
+        # Determine relevant altitude data for the current UAV
+        if (n-1 == self.uav_tot):
+            alt_data = [self.sorted_uxas_data[n-1][1], height_range + 30] #<-- this value is completely arbitrary; signifiies that some 'buffer' is probably needed
+        else:
+            alt_data = [self.sorted_uxas_data[n-1][1], self.sorted_uxas_data[n][1]]
+        
+        # Create a zone file in the UxAS scenario directory
+        for i in range(0, poly_num):
+            poly_list = list(polys_in[i].exterior.coords)
+            self.zone_count = uxasZoneOutput(poly_list, self.scenario_path, self.abs_path, alt_data, self.zone_count)
 
 
     #MAIN LOOP
@@ -337,7 +362,7 @@ class pngToPolygons():
                 
                 chk = 1
                 
-                # This is meant to ensure that there are no overlapping and/or concave polygons left
+                # This is meant to ensure that there are no overlapping and/or concave polygons left at the end of the program
                 while (chk == 1):
                         
                     # Merge overlapping polygons
@@ -355,11 +380,14 @@ class pngToPolygons():
                     # Prepare for next loop
                     polys_in_loop = polys_simple
                 
+                #output polygons into their own UxAS-readable file
+                self.outputPolygons(polys_simple, i)
+                
                 #self.printPolygons(polys_simple)
-                self.printPolygons(polys_extern_only)
-                self.printPolygons(polys_simple)
-                self.printPolygons([img_bounds])
-                plt.show()
+                #self.printPolygons(polys_extern_only)
+                #self.printPolygons(polys_simple)
+                #self.printPolygons([img_bounds])
+                #plt.show()
                 
         finally:
             

@@ -1,6 +1,6 @@
 # UxAS Zone Generator
 
-### Warning: still very much a work in progress! (7/28/17 Currently not functional)
+### Warning: still very much a work in progress! (7/29/17 Currently not functional)
 
 These files contain test versions of the individual componentsof this project, along with what is needed to test them out.
 Updates to come soon to bring this up to a more functional state, but until then, this is not particularly useful.

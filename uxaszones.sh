@@ -6,7 +6,7 @@
 
 # Get scenario name
 echo "what is the name of your scenario?:"
-read SCENARIO_NAME #="test"
+read SCENARIO_NAME
 
 # Get static paths
 RELATIVE_PATH="`dirname \"$0\"`"
@@ -15,7 +15,7 @@ SCENARIO_PATH="/home/$USER/UxAS_pulls/OpenUxAS/examples/$SCENARIO_NAME/MessagesT
 
 # Get PNG name
 echo "What is the name of your heightmap image? (the image name without .png):"
-read YOURIMAGENAME #=test
+read YOURIMAGENAME
 
 # Create output storage folder
 cd ~/Documents/uxas_zones/
@@ -41,6 +41,6 @@ python exclusion_gen.py "$SCENARIO_PATH" "$STORE_PATH" "$YOURIMAGENAME"
 python border_create.py "$SCENARIO_PATH" "$STORE_PATH"
 
 # Generate polygons from raster images
-python png_to_polygons.py "$SCENARIO_PATH" "$STORE_PATH" "$YOURIMAGENAME"
+python png_to_polygons.py "$SCENARIO_PATH" "$STORE_PATH" "$YOURIMAGENAME" "$ABSOLUTE_PATH"
 
 

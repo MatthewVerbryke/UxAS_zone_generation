@@ -1,0 +1,20 @@
+<KeepOutZone Series="CMASI">
+  <ZoneType>$ZONETYPE$</ZoneType>
+  <ZoneID>$ZONENUMBER$</ZoneID>
+  <MinAltitude>$ALTMIN$</MinAltitude>
+  <MinAltitudeType>MSL</MinAltitudeType>
+  <MaxAltitude>$ALTMAX$</MaxAltitude>
+  <MaxAltitudeType>MSL</MaxAltitudeType>
+  <AffectedAircraft/>
+  <StartTime>0</StartTime>
+  <EndTime>0</EndTime>
+  <Padding>0.0</Padding>
+  <Label/>
+  <Boundary>
+    <Polygon Series="CMASI">
+      <BoundaryPoints>
+$POLYPOINTS$
+      </BoundaryPoints>
+    </Polygon>
+  </Boundary>
+</KeepOutZone>
