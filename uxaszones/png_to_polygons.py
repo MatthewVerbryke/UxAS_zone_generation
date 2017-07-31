@@ -305,9 +305,13 @@ class pngToPolygons():
             return 0
         else:
             return 1
-            
+    
         
-    #PRINT POLYGONS
+    #CONVERT FROM IMAGE FRAME TO REAL-WORLD, LAT./LONG. COORDINATES
+    
+    
+        
+    #PRINT POLYGONS AND SAVE TO FILE
     def printPolygons(self, polys_in):
         
         poly_num = len(polys_in)
@@ -316,12 +320,20 @@ class pngToPolygons():
         for i in range(0,poly_num):
             poly_outline = list(polys_in[i].exterior.coords)
             poly_outlines = np.array(poly_outline)
-            plt.plot(poly_outlines[:,1], poly_outlines[:,0])
+            # This will correct the orientation of the png coordinate frame relative 
+            # to the real world frame, where (0,0) is the northeast corner. This may
+            # change if a new elevation data source is chosen.
+            plt.plot(poly_outlines[:,0], poly_outlines[:,1])
             
             
-    #OUTPUT POLYGONS AS FILES
+    #OUTPUT FIGURES TO FILES
+    def saveFigures(self, n):
         
-            
+        # Save figure to file
+        uav_num = self.sorted_uxas_data[n][0]
+        plt.savefig('{}_zones.pdf'.format(uav_num), bbox_inches='tight')
+        
+        
     #OUTPUT POLYGONS AS UXAS ZONES
     def outputPolygons(self, polys_in, n):
         
@@ -342,6 +354,8 @@ class pngToPolygons():
     #MAIN LOOP
     def main(self):
         try:
+            
+            all_simp_polys = []
             
             # Create image bounds
             img_bounds = self.createImageBounds()
@@ -380,19 +394,36 @@ class pngToPolygons():
                     # Prepare for next loop
                     polys_in_loop = polys_simple
                 
-                #output polygons into their own UxAS-readable file
-                self.outputPolygons(polys_simple, i)
+                # Output polygons into their own UxAS-readable file
+                #self.outputPolygons(polys_simple, i)
                 
-                #self.printPolygons(polys_simple)
-                #self.printPolygons(polys_extern_only)
-                #self.printPolygons(polys_simple)
-                #self.printPolygons([img_bounds])
-                #plt.show()
+                # Append output to all output list
+                all_simp_polys.append(polys_simple)
+                
+                # Plot polygons
+                self.printPolygons(polys_simple)
+                self.printPolygons(polys_extern_only)
+                self.printPolygons([img_bounds]) 
+                
+                # Save figures to 'store path'
+                self.saveFigures(i)
+                
+                plt.close()
+                
+            # Print all output zones together
+            
+            self.printPolygons([img_bounds])
+            for i in range(0, self.uav_tot):
+                self.printPolygons(all_simp_polys[i])
+                
+            plt.savefig('all_zones.pdf', bbox_inches='tight')
+                
                 
         finally:
             
             # Switch back to the cwd
             os.chdir(self.setdir)
+            
 
 
 if __name__ == "__main__":
