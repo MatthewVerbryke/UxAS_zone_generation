@@ -4,8 +4,6 @@
 # https://github.com/ (FILL IN THIS)
 # Additional copyright may be held by others, as reflected in the commit history.
 
-#import geodesy
-#import geodesy.utm
 from get_uav_data import parseAllFiles
 from gmap_output import plot_to_google_maps
 from math import tan, radians
@@ -83,11 +81,11 @@ class PngToPolygons():
         self.zone_count = 1
     
         # Image location reference (northwest corner of image)
-        lat_init = self.corner[0]
-        long_init = self.corner[1]
+        self.lat_init = self.corner[0]
+        self.long_init = self.corner[1]
         
         # Convert reference point to UTM
-        self.utm_ref = utm.from_latlon(lat_init, long_init)
+        self.utm_ref = utm.from_latlon(self.lat_init, self.long_init)
                 
         # Run main program
         self.main()
@@ -340,7 +338,7 @@ class PngToPolygons():
 
                 
     #CONVERT FROM LOCAL TO GEODETIC COORDINATES (AKA DEGREES LATITUDE & LONGITUDE)
-    def localToLatLong(self, polys_in):
+    def local_to_geodetic(self, polys_in):
         
         poly_num = len(polys_in)
         polys_out = [None]*poly_num
@@ -354,8 +352,32 @@ class PngToPolygons():
             for j in range(0,point_len):
                 point_loc_utm = [self.utm_ref[0]+poly_outline[j][0], self.utm_ref[1]+poly_outline[j][1], self.utm_ref[2], self.utm_ref[3]]
                 points_latlon[j] = utm.to_latlon(point_loc_utm[0], point_loc_utm[1], point_loc_utm[2], point_loc_utm[3])
-               # print(points_latlon[j])
+                
             polys_out[i] = Polygon(points_latlon) 
+            
+        return polys_out
+        
+    #CONVERT FROM 'PIXEL' TO GEODETIC COORDINATES
+    def pixel_to_geodetic(self, polys_in):
+        
+        # Pixel to geodetic conversions
+        p_to_lat = (self.corner[0] - self.corner[2])/(self.img_size + 1)
+        p_to_long = (self.corner[1] - self.corner[3])/(self.img_size + 1)
+        poly_num = len(polys_in)
+        polys_out = [None]*poly_num
+        
+        for i in range(0, poly_num):
+            poly_outline = list(polys_in[i].exterior.coords)
+            point_len = len(poly_outline)
+            points_latlong = [None]*point_len
+            
+            for j in range(0,point_len):
+                point_lat = poly_outline[j][1] * p_to_lat + self.lat_init
+                point_long = poly_outline[j][0] * p_to_long + self.long_init
+                
+                points_latlong[j] = (point_lat, point_long)
+                
+            polys_out[i] = Polygon(points_latlong)
             
         return polys_out
     
@@ -449,7 +471,7 @@ class PngToPolygons():
                 [img_bound] = self.pixel_to_local([img_bounds])
                 
                 # Convert points to geodetic coordinates
-                polys_geodet = self.localToLatLong(polys_local)
+                polys_geodet = self.pixel_to_geodetic(polys_simple)
                 
                 # Output polygons into their own UxAS-readable file
                 self.outputPolygons(polys_geodet, i)
@@ -463,11 +485,13 @@ class PngToPolygons():
                 self.printPolygons([img_bound])
                 
                 # Save figures to 'store path'
-                #self.saveFigures(i)
-                plot_to_google_maps(polys_geodet, self.corner, self.sorted_uxas_data[i], self.img_path)
+                self.saveFigures(i-1)
                 
-                plt.show()
-                #plt.close()
+                # Create Google Maps 'checks'
+                plot_to_google_maps(polys_geodet, self.corner, self.sorted_uxas_data[i-1][0], self.img_path)
+                
+                #plt.show()
+                plt.close()
                 
             # Print all output zones together
             self.printPolygons([img_bound])
