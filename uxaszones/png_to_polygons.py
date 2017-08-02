@@ -4,8 +4,10 @@
 # https://github.com/ (FILL IN THIS)
 # Additional copyright may be held by others, as reflected in the commit history.
 
-
+#import geodesy
+#import geodesy.utm
 from get_uav_data import parseAllFiles
+from gmap_output import plot_to_google_maps
 from math import tan, radians
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,10 +20,11 @@ from scipy import misc
 from shapely.geometry import Polygon, MultiPoint
 from skimage import measure
 import sys
+import utm
 
 
 
-class pngToPolygons():
+class PngToPolygons():
     
     def __init__(self):
         
@@ -41,9 +44,10 @@ class pngToPolygons():
         self.uav_tot = uxas_data[0]
         
         # Get image information (real world side length, heightrange)        
-        img_len = readCSVInput(self.img_path, 'side_length')
+        self.img_len = readCSVInput(self.img_path, 'side_length')
         self.height_range = readCSVInput(self.img_path, 'heights')
-        
+        self.corner = readCSVInput(self.img_path, 'location')
+ 
         # Get image size
         os.chdir(self.img_path)
         
@@ -62,7 +66,7 @@ class pngToPolygons():
             turn_rad = (speed ** 2)/(gravity * tan(bank_angle))
                         
             # Determine buffer distances
-            self.buff_dist[i] = turn_rad * float(self.img_size)/float(img_len)
+            self.buff_dist[i] = turn_rad * float(self.img_size)/float(self.img_len)
             
             # Get UAV IDs
             self.ID[i] = uxas_data[i+1][0]
@@ -78,6 +82,13 @@ class pngToPolygons():
         # Initialize zone count variable
         self.zone_count = 1
     
+        # Image location reference (northwest corner of image)
+        lat_init = self.corner[0]
+        long_init = self.corner[1]
+        
+        # Convert reference point to UTM
+        self.utm_ref = utm.from_latlon(lat_init, long_init)
+                
         # Run main program
         self.main()
  
@@ -108,8 +119,8 @@ class pngToPolygons():
 
             # Correct the orientation of the contours so they match the png
             for j in range(0,poly_point_len):
-                poly_points[j] = [(poly_point_un[j][1]), poly_point_un[j][0]]
-
+                poly_points[j] = [(poly_point_un[j][1] - (self.img_size + 1)), -poly_point_un[j][0]]
+            
             # Create shapely polygon from corrected contours
             polygons[i] = Polygon(poly_points)
 
@@ -120,7 +131,7 @@ class pngToPolygons():
     def createImageBounds(self):
 
         bound_size = float(self.img_size - 1)
-        bound_corners = ([0.,0.], [0.,bound_size+2], [bound_size+2,bound_size+2], [bound_size+2,0.], [0.,0.])
+        bound_corners = ([0.,0.], [0.,-bound_size-2], [-bound_size-2,-bound_size-2], [-bound_size-2,0.], [0.,0.])
         bound_np = np.array(bound_corners)
         bound = Polygon(bound_corners)
 
@@ -305,13 +316,51 @@ class pngToPolygons():
             return 0
         else:
             return 1
-    
+            
+    #CONVERT FROM 'PIXEL' COORDINATES TO LOCAL COORDINATES (AKA METERS)
+    def pixel_to_local(self, polys_in):
         
-    #CONVERT FROM IMAGE FRAME TO REAL-WORLD, LAT./LONG. COORDINATES
-    
-    
+        poly_num = len(polys_in)
+        polys_out = [None]*poly_num
         
-    #PRINT POLYGONS AND SAVE TO FILE
+        for i in range(0, poly_num):
+            poly_outline = list(polys_in[i].exterior.coords)
+            poly_len = len(poly_outline)
+            points_local = [None]*poly_len
+            
+            for j in range(0, poly_len):
+                point_local_x = poly_outline[j][0] * self.img_len/(self.img_size + 1)
+                point_local_y = poly_outline[j][1] * self.img_len/(self.img_size + 1)
+                
+                points_local[j] = ([point_local_x, point_local_y])
+                
+            polys_out[i] = Polygon(points_local)
+        
+        return polys_out
+
+                
+    #CONVERT FROM LOCAL TO GEODETIC COORDINATES (AKA DEGREES LATITUDE & LONGITUDE)
+    def localToLatLong(self, polys_in):
+        
+        poly_num = len(polys_in)
+        polys_out = [None]*poly_num
+        
+        for i in range(0, poly_num):
+            poly_outline = list(polys_in[i].exterior.coords)
+            point_len = len(poly_outline)
+            hold = [None, None]
+            points_latlon = [hold]*point_len
+
+            for j in range(0,point_len):
+                point_loc_utm = [self.utm_ref[0]+poly_outline[j][0], self.utm_ref[1]+poly_outline[j][1], self.utm_ref[2], self.utm_ref[3]]
+                points_latlon[j] = utm.to_latlon(point_loc_utm[0], point_loc_utm[1], point_loc_utm[2], point_loc_utm[3])
+               # print(points_latlon[j])
+            polys_out[i] = Polygon(points_latlon) 
+            
+        return polys_out
+    
+    
+    #PRINT POLYGONS
     def printPolygons(self, polys_in):
         
         poly_num = len(polys_in)
@@ -355,7 +404,7 @@ class pngToPolygons():
     def main(self):
         try:
             
-            all_simp_polys = []
+            all_final_polys = []
             
             # Create image bounds
             img_bounds = self.createImageBounds()
@@ -394,27 +443,36 @@ class pngToPolygons():
                     # Prepare for next loop
                     polys_in_loop = polys_simple
                 
+                # Convert points to local coordinates
+                polys_local = self.pixel_to_local(polys_simple)
+                polys_original = self.pixel_to_local(polys_extern_only)
+                [img_bound] = self.pixel_to_local([img_bounds])
+                
+                # Convert points to geodetic coordinates
+                polys_geodet = self.localToLatLong(polys_local)
+                
                 # Output polygons into their own UxAS-readable file
-                #self.outputPolygons(polys_simple, i)
+                self.outputPolygons(polys_geodet, i)
                 
                 # Append output to all output list
-                all_simp_polys.append(polys_simple)
+                all_final_polys.append(polys_local)
                 
                 # Plot polygons
-                self.printPolygons(polys_simple)
-                self.printPolygons(polys_extern_only)
-                self.printPolygons([img_bounds]) 
+                self.printPolygons(polys_local)
+                self.printPolygons(polys_original)
+                self.printPolygons([img_bound])
                 
                 # Save figures to 'store path'
-                self.saveFigures(i)
+                #self.saveFigures(i)
+                plot_to_google_maps(polys_geodet, self.corner, self.sorted_uxas_data[i], self.img_path)
                 
-                plt.close()
+                plt.show()
+                #plt.close()
                 
             # Print all output zones together
-            
-            self.printPolygons([img_bounds])
+            self.printPolygons([img_bound])
             for i in range(0, self.uav_tot):
-                self.printPolygons(all_simp_polys[i])
+                self.printPolygons(all_final_polys[i])
                 
             plt.savefig('all_zones.pdf', bbox_inches='tight')
                 
@@ -427,6 +485,6 @@ class pngToPolygons():
 
 
 if __name__ == "__main__":
-    pngToPolygons()
+    PngToPolygons()
 	
 #EOF

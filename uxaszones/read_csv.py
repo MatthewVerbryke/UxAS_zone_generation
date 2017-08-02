@@ -45,17 +45,19 @@ def readCSVInput(img_path, data_return):
     # Retrieve location data    
     elif (data_return == 'location'):
 
-        # Get Latitude and Longitude of the Northeast corner of the image
+        # Get Latitude and Longitude of the Northeast and Southwest corner of the image
         ne_corner_lat = data_list[2]
         ne_corner_long = data_list[3]
+        sw_corner_lat = data_list[4]
+        sw_corner_long = data_list[5]
 
-        return [ne_corner_lat, ne_corner_long]
+        return [ne_corner_lat, ne_corner_long, sw_corner_lat, sw_corner_long]
     
     # Retreive image scale data
     elif (data_return == 'side_length'):
             
         # Get side length of image area on earth's surface
-        img_len = data_list[4]
+        img_len = data_list[6]
             
         return img_len
 

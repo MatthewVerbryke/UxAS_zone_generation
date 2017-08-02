@@ -7,6 +7,7 @@
 # Get scenario name
 echo "what is the name of your scenario?:"
 read SCENARIO_NAME
+echo " "
 
 # Get static paths
 RELATIVE_PATH="`dirname \"$0\"`"
