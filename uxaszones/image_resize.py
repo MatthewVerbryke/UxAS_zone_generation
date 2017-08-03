@@ -1,6 +1,6 @@
 # Copyright 2017 University of Cincinnati
 # All rights reserved. See LICENSE file at:
-# https://github.com/MatthewVerbryke/gazebo_terrain
+# https://github.com/MatthewVerbryke/uxas_zone_generation
 # Additional copyright may be held by others, as reflected in the commit history.
 
 # NOTE: This is not an executable file. It is only called by other scripts.
