@@ -37,11 +37,11 @@ Next, you will need to get your heightmap image for the desired area, and the fo
   * latitude and longitude of the southwest (bottom-left) corner of the heightmap
   * real-world side length of the heightmap (in meters)
   
-![alt text](https://github.com/MatthewVerbryke/uxas_zone_generation/doc/img_data.png "Required Image Data")
+![alt text](/doc/image_data.png "Required Image Data")
 
 Finally, you will need to assemble these data inputs in the correct location for the program to locate. Within the `home/$user/Pictures/heightmaps/` directory, create a new folder with the same name you intend to give/gave to your heightmap image (i.e. if your image is `IMAGENAME.png`, the directory will be called `IMAGENAME`). Under this new directory, place your heightmap image and create a new file called `data.csv`. The contents of this file need to be in the following order:
 
-![alt text](https://github.com/MatthewVerbryke/uxas_zone_generation/doc/data_csv.png ".csv File Format")
+![alt text](/doc/data_csv.png ".csv File Format")
 
 You should now be ready to run the program
 
@@ -69,7 +69,7 @@ The program creates outputs in two file locations. The final zones are output di
   * PyPlot showing all zones outputted to UxAS together (all_zones.pdf)
   * An .html for each UAV that shows the final zones in google maps(`UAV_ID`_zones.html)
   
-![alt text](https://github.com/MatthewVerbryke/uxas_zone_generation/doc/outputs.png "Program Outputs")
+![alt text](/doc/outputs.png "Program Outputs")
   
 ## Notes
 
