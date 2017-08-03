@@ -95,11 +95,11 @@ class exclusionAreaGenerator():
 
                     img.putdata(imglist_out)
                     uav_name = sorted_uav_data[i][0]
-                    img.save('{}_pzones.png'.format(uav_name))
+                    img.save('{}_obstructions.png'.format(uav_name))
 
             # Create image and save it for all UAVs
             img.putdata(imglist_all)
-            img.save('{}_all_zones.png'.format(self.img_name_sub))
+            img.save('all_obstructions.png')
 
         finally:
             

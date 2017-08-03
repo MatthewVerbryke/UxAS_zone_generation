@@ -97,7 +97,7 @@ class PngToPolygons():
         current_uav = self.ID[i-1]
 
         # Open the heightmap image
-        zone_map = misc.imread('{}_pzones.png'.format(current_uav))
+        zone_map = misc.imread('{}_obstructions.png'.format(current_uav))
 
         # Run through the png and find the contour lines
         cont_points = measure.find_contours(zone_map, 1.0)
@@ -497,7 +497,7 @@ class PngToPolygons():
             for i in range(0, self.uav_tot):
                 self.printPolygons(all_final_polys[i])
                 
-            plt.savefig('all_zones.pdf', bbox_inches='tight')
+            plt.savefig('output_zones.pdf', bbox_inches='tight')
                 
                 
         finally:

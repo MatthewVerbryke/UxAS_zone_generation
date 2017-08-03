@@ -5,7 +5,7 @@
 # Additional copyright may be held by others, as reflected in the commit history.
 
 # Get scenario name
-echo "what is the name of your scenario?:"
+echo "What is the name of your scenario?:"
 read SCENARIO_NAME
 echo " "
 

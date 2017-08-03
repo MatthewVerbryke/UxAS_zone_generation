@@ -73,7 +73,7 @@ class createBorder():
                 current_uav = self.uxas_data[i+1][0]
                 
                 # Open the heightmap image
-                img_name = '{}_pzones.png'.format(current_uav)
+                img_name = '{}_obstructions.png'.format(current_uav)
                 
                 # Add border to image
                 self.addBorder(img_name, i)
