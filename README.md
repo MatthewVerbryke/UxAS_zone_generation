@@ -4,9 +4,9 @@
 
 This repository contains a program that can be used to automatically generate zones, based on given heightmaps, geographic information, and vehicle data, for [AFRL-RQ](http://www.wpafb.af.mil/afrl/rq/)'s Unmanned Systems Autonomy Services (UXAS) architecture. The program will use the given inputs to determine the obstructions for each UAV (based on altitude), perform raster-to-vector conversion to generate polygons of these areas, and use polygon manipulation to create and output buffered polygonal zones in the appropriate format for UxAS to use.  Also provided as an output are images and figures that are intended to allow the user to confirm that the output is correct.
 
-## Requriments
+## Requirements
 
-You need to have a clone of [OpenUxAS](https://github.com/afrl-rq/OpenUxAS) program on your system for this program to work.
+You need to install [OpenUxAS](https://github.com/afrl-rq/OpenUxAS) program on your system for this program to work. Follow the instructions presented on that page.
 
 This program has the following python library dependencies:
   * [Pillow](http://pillow.readthedocs.io/en/3.0.x/index.html)
