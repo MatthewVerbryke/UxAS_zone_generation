@@ -4,21 +4,24 @@
 # https://github.com/MatthewVerbryke/uxas_zone_generation
 # Additional copyright may be held by others, as reflected in the commit history.
 
-from get_uav_data import parseAllFiles
-from gmap_output import plot_to_google_maps
+
 from math import tan, radians
+import os
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
-import os
-from output import uxasZoneOutput
 import PIL
 from PIL import Image
-from read_csv import readCSVInput
 from scipy import misc
 from shapely.geometry import Polygon, MultiPoint
 from skimage import measure
-import sys
 import utm
+
+from get_uav_data import parse_all_files
+from gmap_output import plot_to_google_maps
+from output import uxas_zone_output
+from read_csv import read_csv_input
 
 
 class PngToPolygons():
@@ -35,15 +38,15 @@ class PngToPolygons():
         self.abs_path = sys.argv[4]
         
         # Get relevant UAV data from UxAS scenario files
-        uxas_data = parseAllFiles(self.scenario_path)
+        uxas_data = parse_all_files(self.scenario_path)
         
         # Set number of UAVs
         self.uav_tot = uxas_data[0]
         
         # Get image information (real world side length, heightrange)        
-        self.img_len = readCSVInput(self.img_path, 'side_length')
-        self.height_range = readCSVInput(self.img_path, 'heights')
-        self.corner = readCSVInput(self.img_path, 'location')
+        self.img_len = read_csv_input(self.img_path, 'side_length')
+        self.height_range = read_csv_input(self.img_path, 'heights')
+        self.corner = read_csv_input(self.img_path, 'location')
  
         # Get image size
         os.chdir(self.img_path)
@@ -89,9 +92,8 @@ class PngToPolygons():
         # Run main program
         self.main()
  
- 
     #CREATE POLYGONS FROM HEIGHTMAP IMAGE CONTOURS
-    def polygonsFromPNGs(self, i):
+    def polygons_from_pngs(self, i):
 
         # Get current UAV ID
         current_uav = self.ID[i-1]
@@ -123,9 +125,8 @@ class PngToPolygons():
 
         return polygons
 
-
     # CREATE SHAPE FOR IMAGE BOUNDS
-    def createImageBounds(self):
+    def create_image_bounds(self):
 
         bound_size = float(self.img_size - 1)
         bound_corners = ([0.,0.], [0.,-bound_size-2], [-bound_size-2,-bound_size-2], [-bound_size-2,0.], [0.,0.])
@@ -134,9 +135,8 @@ class PngToPolygons():
 
         return bound
 
-
     #ELIMINATE INTERNAL POLYGONS
-    def eliminateInnerRings(self, polys_in):
+    def eliminate_inner_rings(self, polys_in):
 
         polys_out = []
         poly_num = len(polys_in)
@@ -149,20 +149,19 @@ class PngToPolygons():
                     pass
                 else:
                     chk = polys_in[i].within(polys_in[j])
-                    if (chk == True):
+                    if chk:
                         within_flag = True
                     else:
                         pass
         
             # If a polygon is not within another one, append it to the output list
-            if (within_flag == False):
+            if not within_flag:
                 polys_out.append(polys_in[i])
 
         return polys_out
 
-
     #CREATE BUFFER AROUND POLYGONS
-    def bufferPolygons(self, polys_in, uav_number):
+    def buffer_polygons(self, polys_in, uav_number):
 
         poly_num = len(polys_in)
         polys_out = [None]*poly_num
@@ -173,9 +172,8 @@ class PngToPolygons():
 
         return polys_out
 
-
     #CROP POLYGONS INTO IMAGE FRAME
-    def cropPolygons(self, polys_in, bounds):
+    def crop_polygons(self, polys_in, bounds):
 
         poly_num = len(polys_in)
         polys_out = []
@@ -187,9 +185,8 @@ class PngToPolygons():
 
         return polys_out
 
-
     #MERGE OVERLAPPING POLYGONS
-    def unionPolygons(self, polys_in):
+    def union_polygons(self, polys_in):
 
         polys_out = []
         polys_temp = polys_in
@@ -208,7 +205,7 @@ class PngToPolygons():
             for i in range(0,poly_num):
                 overlap_i = [False]*poly_num
                 for j in range(0,poly_num):
-                    if (polys_temp[i].intersects(polys_temp[j]) == True) and (i != j):
+                    if (polys_temp[i].intersects(polys_temp[j])) and (i != j):
                         overlap_i[j] = True
                     else:
                         pass
@@ -222,7 +219,7 @@ class PngToPolygons():
             # Join overlapping pairs of polygons together (once per "i"), and record the results
             for i in range(0,poly_num):
                 for j in range(0,poly_num):
-                    if (unioned[i] == 0) and (overlaps_upper[i][j] == True):
+                    if (unioned[i] == 0) and (overlaps_upper[i][j]):
                         polys_temp[i] = polys_temp[i].union(polys_temp[j])
                         #unioned[i] = 2 #polygons that have absorbed another polygon
                         unioned[j] = 1 #polygons that have been absorbed and should no longer be kept
@@ -237,7 +234,7 @@ class PngToPolygons():
                     
             # Set exit flag and prepare output, when no more unions are possible
             overlaps_exist = np.any(overlaps_np)
-            if (overlaps_exist == False):
+            if not overlaps_exist:
                 exit_flag = True
                 for i in range(0,len(polys_new)):
                     if (unioned[i] == 0):
@@ -249,9 +246,8 @@ class PngToPolygons():
                         
         return polys_out
 
-
     #CREATE CONVEX POLYGON FROM CONCAVE POLYGONS
-    def concaveToConvex(self, polys_in):
+    def concave_to_convex(self, polys_in):
         
         poly_num = len(polys_in)
         polys_out = [None]*poly_num
@@ -263,10 +259,9 @@ class PngToPolygons():
             polys_out[i] = poly_multipoints.convex_hull
             
         return polys_out
-        
 
     #SIMPLIFY POLYGONS
-    def simplifyPolygons(self, polys_in):
+    def simplify_polygons(self, polys_in):
         
         
         poly_num = len(polys_in)
@@ -293,9 +288,8 @@ class PngToPolygons():
             
         return polys_out
         
-        
     #CHECK FINAL POLYGONS
-    def checkPolygons(self, polys_in):
+    def check_polygons(self, polys_in):
         
         poly_num = len(polys_in)
         poly_check = []
@@ -309,7 +303,7 @@ class PngToPolygons():
         
         no_true_values = not any(poly_check)
         
-        if (no_true_values == True):
+        if no_true_values:
             return 0
         else:
             return 1
@@ -335,7 +329,6 @@ class PngToPolygons():
         
         return polys_out
 
-                
     #CONVERT FROM LOCAL TO GEODETIC COORDINATES (AKA DEGREES LATITUDE & LONGITUDE)
     def local_to_geodetic(self, polys_in):
         
@@ -380,9 +373,8 @@ class PngToPolygons():
             
         return polys_out
     
-    
     #PRINT POLYGONS
-    def printPolygons(self, polys_in, clr):
+    def print_polygons(self, polys_in, clr):
         
         poly_num = len(polys_in)
         
@@ -395,17 +387,15 @@ class PngToPolygons():
             # change if a new elevation data source is chosen.
             plt.plot(poly_outlines[:,0], poly_outlines[:,1], clr)
             
-            
     #OUTPUT FIGURES TO FILES
-    def saveFigures(self, n):
+    def save_figures(self, n):
         
         # Save figure to file
         uav_num = self.sorted_uxas_data[n][0]
         plt.savefig('{}_zones.pdf'.format(uav_num), bbox_inches='tight')
         
-        
     #OUTPUT POLYGONS AS UXAS ZONES
-    def outputPolygons(self, polys_in, n):
+    def output_polygons(self, polys_in, n):
         
         poly_num = len(polys_in)
         
@@ -418,8 +408,7 @@ class PngToPolygons():
         # Create a zone file in the UxAS scenario directory
         for i in range(0, poly_num):
             poly_list = list(polys_in[i].exterior.coords)
-            self.zone_count = uxasZoneOutput(poly_list, self.scenario_path, self.abs_path, alt_data, self.zone_count)
-
+            self.zone_count = uxas_zone_output(poly_list, self.scenario_path, self.abs_path, alt_data, self.zone_count)
 
     #MAIN LOOP
     def main(self):
@@ -428,21 +417,21 @@ class PngToPolygons():
             all_final_polys = []
             
             # Create image bounds
-            img_bounds = self.createImageBounds()
+            img_bounds = self.create_image_bounds()
             
             for i in range(0,self.uav_tot):
                 
                 # Get the polygons from the heightmap
-                polys_raw = self.polygonsFromPNGs(i)
+                polys_raw = self.polygons_from_pngs(i)
                    
                 # Filter out fully contained polygons
-                polys_extern_only = self.eliminateInnerRings(polys_raw)
+                polys_extern_only = self.eliminate_inner_rings(polys_raw)
                     
                 # Create buffer around polygons
-                polys_buff = self.bufferPolygons(polys_extern_only, i)
+                polys_buff = self.buffer_polygons(polys_extern_only, i)
                     
                 # Crop buffered polygons back into the image frame
-                polys_in_loop = self.cropPolygons(polys_buff, img_bounds)
+                polys_in_loop = self.crop_polygons(polys_buff, img_bounds)
                 
                 chk = 1
                 
@@ -450,16 +439,16 @@ class PngToPolygons():
                 while (chk == 1):
                         
                     # Merge overlapping polygons
-                    polys_union = self.unionPolygons(polys_in_loop)
+                    polys_union = self.union_polygons(polys_in_loop)
                         
                     # Create convex polygon for each polygon
-                    polys_convex = self.concaveToConvex(polys_union)
+                    polys_convex = self.concave_to_convex(polys_union)
                         
                     # Simplify the polygons to less than 64 verticies each
-                    polys_simple = self.simplifyPolygons(polys_convex)
+                    polys_simple = self.simplify_polygons(polys_convex)
                         
                     # Check results
-                    chk = self.checkPolygons(polys_simple)
+                    chk = self.check_polygons(polys_simple)
                     
                     # Prepare for next loop
                     polys_in_loop = polys_simple
@@ -473,18 +462,18 @@ class PngToPolygons():
                 polys_geodet = self.pixel_to_geodetic(polys_simple)
                 
                 # Output polygons into their own UxAS-readable file
-                self.outputPolygons(polys_geodet, i)
+                self.output_polygons(polys_geodet, i)
                 
                 # Append output to all output list
                 all_final_polys.append(polys_local)
                 
                 # Plot polygons
-                self.printPolygons(polys_local, 'r')
-                self.printPolygons(polys_original, 'b' )
-                self.printPolygons([img_bound], 'k')
+                self.print_polygons(polys_local, 'r')
+                self.print_polygons(polys_original, 'b' )
+                self.print_polygons([img_bound], 'k')
                 
                 # Save figures to 'store path'
-                self.saveFigures(i-1)
+                self.save_figures(i-1)
                 
                 # Create Google Maps 'checks'
                 plot_to_google_maps(polys_geodet, self.corner, self.sorted_uxas_data[i-1][0], self.img_path)
@@ -493,18 +482,16 @@ class PngToPolygons():
                 plt.close()
                 
             # Print all output zones together
-            self.printPolygons([img_bound],'k')
+            self.print_polygons([img_bound],'k')
             for i in range(0, self.uav_tot):
-                self.printPolygons(all_final_polys[i], 'r')
+                self.print_polygons(all_final_polys[i], 'r')
             plt.savefig('output_zones.pdf', bbox_inches='tight')
-                
                 
         finally:
             
             # Switch back to the cwd
             os.chdir(self.setdir)
             
-
 
 if __name__ == "__main__":
     PngToPolygons()

@@ -7,12 +7,13 @@
 
 import math
 import os
-import PIL
 import sys
+
+import PIL
 from PIL import Image
 
 
-def imageResizeAndRescale(img_path, img_name):
+def image_resize_and_rescale(img_path, img_name):
     try:
         
         # Get cwd

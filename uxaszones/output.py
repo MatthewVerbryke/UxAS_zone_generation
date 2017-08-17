@@ -6,13 +6,12 @@
 # NOTE: This is not an executable file. It is only called by other scripts.
 
 import os
-import sys
 import string
+import sys
 from sys import argv
 
 
-
-def uxasZoneOutput(poly_in_list, scenario_path, absolute_path, alt_data, zone_count):
+def uxas_zone_output(poly_in_list, scenario_path, absolute_path, alt_data, zone_count):
     try:
         
         # Get cwd

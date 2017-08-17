@@ -11,7 +11,7 @@ import os
 
 
 #OPEN, READ, AND GET DATA FROM CSV DATA FILE
-def readCSVInput(img_path, data_return):    
+def read_csv_input(img_path, data_return):    
     
     # Change directory to the image path
     os.chdir(img_path)

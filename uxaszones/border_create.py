@@ -5,12 +5,13 @@
 # Additional copyright may be held by others, as reflected in the commit history.
 
 
-from get_uav_data import parseAllFiles
-import PIL
-from PIL import Image
 import sys
 import os
 
+import PIL
+from PIL import Image
+
+from get_uav_data import parseAllFiles
 
 
 class createBorder():
@@ -36,9 +37,8 @@ class createBorder():
         # Run program
         self.main()
     
-    
     #ADD BORDER TO GIVEN IMAGE
-    def addBorder(self, img_name, i):
+    def add_border(self, img_name, i):
         
         # Open the image
         img = Image.open(img_name)
@@ -61,7 +61,6 @@ class createBorder():
         # Close image
         img.close()
         
-    
     #MAIN PROGRAM
     def main(self):
         try:
@@ -76,12 +75,13 @@ class createBorder():
                 img_name = '{}_obstructions.png'.format(current_uav)
                 
                 # Add border to image
-                self.addBorder(img_name, i)
+                self.add_border(img_name, i)
 
         finally:
             
             # Switch back to the cwd
             os.chdir(self.setdir)
+
 
 if __name__ == "__main__":
     createBorder()

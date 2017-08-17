@@ -7,16 +7,16 @@
 #ASSUMES UAV ALTITUDES ARE DESCRETIZED!
 
 import csv
-from get_uav_data import parseAllFiles
-from image_resize import imageResizeAndRescale
 import os
-import PIL
-from PIL import Image
-from read_csv import readCSVInput
 import string
 import sys
 
+import PIL
+from PIL import Image
 
+from get_uav_data import parse_all_files
+from image_resize import image_resize_and_rescale
+from read_csv import read_csv_input
 
 
 class exclusionAreaGenerator():
@@ -35,9 +35,8 @@ class exclusionAreaGenerator():
         # Run program
         self.main()
 
-
     #CREATE SORTED UAV DATA LIST (UAV NAME, RAW ALTITUDE, SCALED ALTITUDE)
-    def createSortedDataList(self, height_range, uxas_input):
+    def create_sorted_data_list(self, height_range, uxas_input):
 
         # Determine conversion factor between height(in meters) and specific bit value in image (0-255)
         scale_size = 255./height_range
@@ -63,9 +62,8 @@ class exclusionAreaGenerator():
 
         return sorted_uav_data
 
-
     #FOR EACH UAV, FIND THE AREAS OF THE HEIGHTMAP IMAGE THAT ARE AT ITS ALTITUDE AND MARK THEM AS A EXCLUSION AREA IN A NEW PNG MAP
-    def determineExclusions(self, sorted_uav_data):
+    def determine_exclusions(self, sorted_uav_data):
         try:
 
             # Open image
@@ -106,33 +104,31 @@ class exclusionAreaGenerator():
             #Close image
             img.close()
         
-    
     # MAIN BLOCK
     def main(self):
         
         try:
             # Get data from csv file
-            height_range = readCSVInput(self.img_path, 'heights')
+            height_range = read_csv_input(self.img_path, 'heights')
 
             # Get data from uxas scenario file
-            uxas_input = parseAllFiles(self.scenario_path)
+            uxas_input = parse_all_files(self.scenario_path)
 
             # Get number of UAVs in scenario
             self.uav_tot = uxas_input[0]
 
             # Create sorted UAV data list
-            sorted_uav_data = self.createSortedDataList(height_range, uxas_input)
+            sorted_uav_data = self.create_sorted_data_list(height_range, uxas_input)
 
             # Rescale image
-            scaled_img_name = imageResizeAndRescale(self.img_path, self.img_name_sub)
+            scaled_img_name = image_resize_and_rescale(self.img_path, self.img_name_sub)
 
             # Determine exclusion areas on the map
-            self.determineExclusions(sorted_uav_data)
+            self.determine_exclusions(sorted_uav_data)
 
         finally:
             # Switch back to the cwd
             os.chdir(self.setdir)
-
 
 
 if __name__ == "__main__":

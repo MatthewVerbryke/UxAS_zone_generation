@@ -5,9 +5,9 @@
 
 # NOTE: This is not an executable file. It is only called by other scripts.
 
+import os
 
 import gmplot
-import os
 
 
 def plot_to_google_maps(polys_in, corners, uav_data, img_path):
@@ -35,7 +35,7 @@ def plot_to_google_maps(polys_in, corners, uav_data, img_path):
         # Create polygon object
         gmap.polygon(points_lat, points_long, 'r')
         
-        # Create points for each corner of the image
+        # Create points for each corner of the image (this is a check)
         #corner_lats = (corners[0], corners[2], corners[2], corners[0])
         #corner_longs = (corners[1], corners[1], corners[3], corners[3])
         #gmap.polygon(corner_lats, corner_longs, 'k')

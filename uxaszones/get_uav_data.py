@@ -5,15 +5,15 @@
 
 # NOTE: This is not an executable file. It is only called by other scripts.
 
-
 import glob
-import lxml.etree as ET
 import os
 import sys
 
+import lxml.etree as ET
+
 
 # FIND AND RETURN ALL'AirVehicleConfiguration' AND 'AirVehicleState' FILES IN THE UXAS EXAMPLES FOLDER
-def findXMLs(scenario_path):
+def find_xmls(scenario_path):
 
     # Change directory to examples folder
     os.chdir(scenario_path)
@@ -23,7 +23,6 @@ def findXMLs(scenario_path):
     vehc_state = glob.glob('AirVehicleState_V*')
         
     return [vehc_configs, vehc_state]
-
 
 # XML COLLECTOR FOR THE 'AirVehicleConfiguration' FILES
 class configXMLCollector(object):
@@ -64,7 +63,6 @@ class configXMLCollector(object):
 	def close(self):
 		return
 		
-		
 # XML COLLECTOR FOR THE 'AirVehicleState' FILES
 class stateXMLCollector(object):
 	
@@ -100,9 +98,8 @@ class stateXMLCollector(object):
 	def close(self):
 		return	
 		
-
 # XML PARSER		
-def XMLParse(in_file, collect_type):
+def xml_parse(in_file, collect_type):
 	
 	# Get file contents
 	contents = open(in_file, 'r').read()
@@ -121,15 +118,14 @@ def XMLParse(in_file, collect_type):
 	
 	return collector
 
-		
 # PARSE THROUGH ALL XML FILES OF THE TWO TYPES AND RETURN THE RELEVANT DATA FROM THEM
-def parseAllFiles(scenario_path):
+def parse_all_files(scenario_path):
 	
 	# Get cwd
 	setdir = os.getcwd()
 	
 	# Find config and state files
-	vehc_files = findXMLs(scenario_path)
+	vehc_files = find_xmls(scenario_path)
 	
 	# Check to make sure that their are equal numbers of config and state files
 	if (len(vehc_files[0]) != len(vehc_files[1])):
@@ -145,11 +141,11 @@ def parseAllFiles(scenario_path):
 		
 		# Parse through config files
 		config_file = vehc_files[0][i]
-		config_collector = XMLParse(config_file, 0)
+		config_collector = xml_parse(config_file, 0)
 		
 		# Parse through state files
 		state_file = vehc_files[1][i]
-		state_collector = XMLParse(state_file, 1)
+		state_collector = xml_parse(state_file, 1)
 		
 		# Set data to holding variables
 		ID_data = config_collector.ID
