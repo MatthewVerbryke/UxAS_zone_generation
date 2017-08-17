@@ -382,7 +382,7 @@ class PngToPolygons():
     
     
     #PRINT POLYGONS
-    def printPolygons(self, polys_in):
+    def printPolygons(self, polys_in, clr):
         
         poly_num = len(polys_in)
         
@@ -393,7 +393,7 @@ class PngToPolygons():
             # This will correct the orientation of the png coordinate frame relative 
             # to the real world frame, where (0,0) is the northeast corner. This may
             # change if a new elevation data source is chosen.
-            plt.plot(poly_outlines[:,0], poly_outlines[:,1])
+            plt.plot(poly_outlines[:,0], poly_outlines[:,1], clr)
             
             
     #OUTPUT FIGURES TO FILES
@@ -479,9 +479,9 @@ class PngToPolygons():
                 all_final_polys.append(polys_local)
                 
                 # Plot polygons
-                self.printPolygons(polys_local)
-                self.printPolygons(polys_original)
-                self.printPolygons([img_bound])
+                self.printPolygons(polys_local, 'r')
+                self.printPolygons(polys_original, 'b' )
+                self.printPolygons([img_bound], 'k')
                 
                 # Save figures to 'store path'
                 self.saveFigures(i-1)
@@ -493,10 +493,9 @@ class PngToPolygons():
                 plt.close()
                 
             # Print all output zones together
-            self.printPolygons([img_bound])
+            self.printPolygons([img_bound],'k')
             for i in range(0, self.uav_tot):
-                self.printPolygons(all_final_polys[i])
-                
+                self.printPolygons(all_final_polys[i], 'r')
             plt.savefig('output_zones.pdf', bbox_inches='tight')
                 
                 
