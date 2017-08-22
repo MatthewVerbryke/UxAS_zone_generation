@@ -193,7 +193,7 @@ class PngToPolygons():
         exit_flag = False
 
         # Loop until no more unions are possible
-        while (exit_flag == False):
+        while not exit_flag:
             
             # Reset loop variables
             overlaps = []
