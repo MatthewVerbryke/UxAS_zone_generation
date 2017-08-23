@@ -5,11 +5,12 @@
 # Additional copyright may be held by others, as reflected in the commit history.
 
 
-import math
 import os
 import sys
 import urllib2
 import zipfile
+
+from files import get_tile_number, get_file_name
 
 
 class RetrieveSRTMData():
@@ -23,52 +24,10 @@ class RetrieveSRTMData():
         self.img_path = sys.argv[1]
         self.img_name_sub = sys.argv[2]
         self.abs_path = sys.argv[3]
-        self.bound_box = input('Input AO geodetic bounds: (south, west, north, east): ') #((39.067176, -84.558347, 39.139042, -84.465692)
+        self.bound_box = (39.067176, -84.558347, 39.139042, -84.465692)#input('Input AO geodetic bounds: (south, west, north, east): ')
         
         # Run main program
         self.main()   
-        
-    #DETERMINE TILES THAT NEED TO BE FETCHED
-    def tile_number(self):
-        
-        # Find lat/long ceiling and floor
-        lat_low = int(math.floor(self.bound_box[0]))
-        lon_low = int(math.floor(self.bound_box[1]))
-        lat_high = int(math.floor(self.bound_box[2]))
-        lon_high = int(math.floor(self.bound_box[3]))
-        
-        # Calculate ranges
-        lat_range = lat_high - lat_low + 1
-        lon_range = lon_high - lon_low + 1
-        
-        tile_list = []
-        
-        # Fill list with needed tiles
-        for i in range(0, lat_range):            
-            for j in range(0, lon_range):
-                tile_list.append(((lat_low + i), (lon_low + j)))
-                
-        #print tile_list
-        return tile_list
-        
-    #DETERMINE IF TILE IS NORTH OR SOUTH OF EQUATOR
-    def determine_n_or_s(self, tile):
-        
-            # Determine if north or south
-            if (tile[0] >= 0):
-                return 'N'
-            else:
-                return 'S'
-    
-    #DETERMINE IF TILE IS EAST OR WEST OF PRIME MERIDIAN
-    def determine_e_or_w(self, tile):
-        
-            # Determine if west or east
-            if (tile[1] >= 0):
-                return 'E'
-            else:
-                return 'W'
-    
         
     #DETERMINE SRTM 'CONTINENT'
     def determine_continent(self, tile):
@@ -125,21 +84,13 @@ class RetrieveSRTMData():
     def determine_url(self, tile):
               
         url_stub = 'https://dds.cr.usgs.gov/srtm/version2_1/SRTM3/'
-            
-        # Determine tile location
-        n_or_s = self.determine_n_or_s(tile)
-        e_or_w = self.determine_e_or_w(tile)
         
         # Determine continent
         continent = self.determine_continent(tile)
         
-        # take absolute values
-        lat = abs((tile[0]))
-        lon = abs((tile[1]))
-        
-        # Construct URL and file-name
-        file_name = n_or_s + str(lat) + e_or_w + '0' + str(lon) + '.hgt.zip'
-        url = url_stub + continent + '/' + file_name 
+        # Build url
+        file_name = get_file_name(tile)
+        url = url_stub + continent + '/' + file_name + '.hgt.zip'
         
         return url, file_name
 
@@ -171,7 +122,7 @@ class RetrieveSRTMData():
         try:
             
             # Get info on required tiles
-            tiles = self.tile_number()
+            tiles = get_tile_number(self.bound_box)
             
             for i in range(0,len(tiles)):
                 
