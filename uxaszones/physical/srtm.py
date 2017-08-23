@@ -24,7 +24,10 @@ class RetrieveSRTMData():
         self.img_path = sys.argv[1]
         self.img_name_sub = sys.argv[2]
         self.abs_path = sys.argv[3]
-        self.bound_box = (39.067176, -84.558347, 39.139042, -84.465692)#input('Input AO geodetic bounds: (south, west, north, east): ')
+        self.bound_box = input('Input AO geodetic bounds: (south, west, north, east): ')#(39.067176, -84.558347, 39.139042, -84.465692)
+        
+        # Switch to store directory
+        os.chdir(self.img_path)
         
         # Run main program
         self.main()   
@@ -89,16 +92,13 @@ class RetrieveSRTMData():
         continent = self.determine_continent(tile)
         
         # Build url
-        file_name = get_file_name(tile)
-        url = url_stub + continent + '/' + file_name + '.hgt.zip'
+        file_name = get_file_name(tile) + '.hgt.zip'
+        url = url_stub + continent + '/' + file_name 
         
         return url, file_name
 
     #RETRIEVE HGT.ZIP FILE FROM ONLINE SOURCE
     def retrieve_map(self, url):
-        
-        # Switch to store directory
-        os.chdir(self.img_path)
         
         # Open URL destination
         u = urllib2.urlopen(url)

@@ -27,7 +27,7 @@ class GetElevationData():
         self.img_path = sys.argv[1]
         self.img_name_sub = sys.argv[2]
         self.abs_path = sys.argv[3]
-        self.bound_box = input('Input AO geodetic bounds: (south, west, north, east):#(39.067176, -84.558347, 39.139042, -84.465692) ')
+        self.bound_box = input('Input AO geodetic bounds: (south, west, north, east): ')#(39.067176, -84.558347, 39.139042, -84.465692) 
         
         # File Properties
         self.hgt_size = 1201
@@ -49,7 +49,7 @@ class GetElevationData():
             # Find the 'overrun' from the next lowest coordinate
             geo_frac = self.bound_box[i] - geo_floor
             
-            # Convert this to HTG cooordinates
+            # Convert this to hgt cooordinates
             htg_coord = int(round(geo_frac * (self.hgt_size-1)))
             
             # Store bound in bounds list
@@ -63,42 +63,34 @@ class GetElevationData():
         # Get file name
         file_name = get_file_name(tile) + '.hgt'
         
-        # Read data from the HGT file into a numpy array, accounting for the file's big-endianess
+        # Read data from the hgt file into a numpy array, accounting for the file's big-endianess
         hgt_data = np.fromfile(file_name, dtype = '>i2').reshape((self.hgt_size, self.hgt_size))
         
         return hgt_data
-
-    # CONVERT NUMPY ARRAY TO GREYSCALE PNG IMAGE
-    def nparray_to_png(self, nparray):
-        
-        img_list = list(nparray)
-        
-        img= Image.new('I', (self.hgt_size, self.hgt_size))
-        
-        img.putdata(img_list)
-        
-        img_name = self.img_name_sub + '.png' 
-        img.save(img_name)
         
     #'CROP' THE HGT FILE TO THE CORRECT SIZE
     def crop_to_ao(self, bounds, np_array):
-        
+    
+        # Extract bounds
         s = bounds[0][1]
         w = bounds[1][1]
         n = bounds[2][1]
         e = bounds[3][1]
         
+        # Determine the size of the croped area in units of 3 arc-seconds
         new_size = (n - s, e - w)
         
-        crop_array = [None]*new_size[0]*new_size[1]        
-                
+        # Initialize the output data array
+        row = [None]*new_size[1]
+        crop_array = [row]*new_size[0]     
+        
+        # Only copy over data points that are within the bounds
         for i in range(0, new_size[0]):
             for j in range(0, new_size[1]):
-                crop_array[i*new_size[1] + j] = np_array[s + i, e + j]
+                crop_array[i][j] = np_array[self.hgt_size - (1 + n + i)][e + j]
+            
+        return crop_array
                 
-                
-        np.save(self.img_name_sub, crop_array)
-        
     def main(self):
         try:
             
@@ -113,11 +105,14 @@ class GetElevationData():
             
             for i in range(0,len(tiles)):
                 
-                # Pass HGT data into a numpy array
+                # Pass hgt data into a numpy array
                 hgt_array = self.hgt_to_nparray(tiles[i])
                 
-                # Crop HGT file to AO; output result
-                self.crop_to_ao(bounds, hgt_array)
+                # Crop hgt file to AO
+                crop_array = self.crop_to_ao(bounds, hgt_array)
+                
+                # Save the array into a npy file
+                np.save(self.img_name_sub, crop_array)
                 
         finally:
             
