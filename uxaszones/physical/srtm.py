@@ -24,7 +24,7 @@ class RetrieveSRTMData():
         self.img_path = sys.argv[1]
         self.img_name_sub = sys.argv[2]
         self.abs_path = sys.argv[3]
-        self.bound_box = input('Input AO geodetic bounds: (south, west, north, east): ')#(39.067176, -84.558347, 39.139042, -84.465692)
+        self.bound_box = (39.067176, -84.558347, 39.139042, -84.465692) #input('Input AO geodetic bounds: (south, west, north, east): ')
         
         # Switch to store directory
         os.chdir(self.img_path)

@@ -10,10 +10,9 @@ import os
 import sys
 
 import numpy as np
-import PIL
-from PIL import Image
 
 from files import get_tile_number, get_file_name
+#from visualization import array_to_png
 
 
 class GetElevationData():
@@ -27,7 +26,7 @@ class GetElevationData():
         self.img_path = sys.argv[1]
         self.img_name_sub = sys.argv[2]
         self.abs_path = sys.argv[3]
-        self.bound_box = input('Input AO geodetic bounds: (south, west, north, east): ')#(39.067176, -84.558347, 39.139042, -84.465692) 
+        self.bound_box = (39.067176, -84.558347, 39.139042, -84.465692)#input('Input AO geodetic bounds: (south, west, north, east): ') 
         
         # File Properties
         self.hgt_size = 1201
@@ -54,8 +53,13 @@ class GetElevationData():
             
             # Store bound in bounds list
             bounds[i] = (int(geo_floor), htg_coord)
-            
-        return bounds
+
+        s = bounds[0]
+        w = bounds[1]
+        n = bounds[2]
+        e = bounds[3]
+        
+        return s, w, n, e
 
     # RETRIEVE HGT FILE DATA
     def hgt_to_nparray(self, tile):
@@ -67,52 +71,77 @@ class GetElevationData():
         hgt_data = np.fromfile(file_name, dtype = '>i2').reshape((self.hgt_size, self.hgt_size))
         
         return hgt_data
+
+    #MERGE ALL RELEVANT DATA SETS
+    def merge_hgt_data(self, s, w, n, e):
         
-    #'CROP' THE HGT FILE TO THE CORRECT SIZE
-    def crop_to_ao(self, bounds, np_array):
-    
-        # Extract bounds
-        s = bounds[0][1]
-        w = bounds[1][1]
-        n = bounds[2][1]
-        e = bounds[3][1]
+        # Pre-allocate array
+        merged_tiles = np.zeros((self.ew_size, self.ns_size))
         
-        # Determine the size of the croped area in units of 3 arc-seconds
-        new_size = (n - s, e - w)
-        
-        # Initialize the output data array
-        row = [None]*new_size[1]
-        crop_array = [row]*new_size[0]     
-        
-        # Only copy over data points that are within the bounds
-        for i in range(0, new_size[0]):
-            for j in range(0, new_size[1]):
-                crop_array[i][j] = np_array[self.hgt_size - (1 + n + i)][e + j]
-            
-        return crop_array
+        # Loop through each tile
+        for ns in self.ns_tiles:
+            for ew in self.ew_tiles:
                 
+                # Put tile data into numpy array
+                hgt_data = self.hgt_to_nparray((ns,ew))
+
+                # Determine tile data offset
+                ns_off = (self.hgt_size - 1)*(ns - s[0] + 1)
+                ew_off = (self.hgt_size - 1)*(ew - w[0])
+                
+                # Place tile data into the new hgt file in the correct location
+                for i in range(0,self.hgt_size):
+                    for j in range(0,self.hgt_size):
+                        merged_tiles[ew_off + j][ns_off - i] = hgt_data[i][j]
+        
+        return merged_tiles
+        
+    #CROP THE MERGED DATA SET TO THE SPECIFIED BOUNDS
+    def crop_np_array(self, s, w, n, e, np_array):
+        
+        # Determine the size of the croped data set
+        ew = self.ew_size - ((w[1]) + (self.hgt_size - e[1])) + 1
+        ns = self.ns_size - ((s[1]) + (self.hgt_size - n[1])) + 1
+        
+        # Determine upper buffers
+        e_buffer = w[1] + ew + 1
+        n_buffer = s[1] + ns + 1
+
+        # Slice the array along the bounds
+        crop_array = np_array[w[1]:e_buffer, s[1]:n_buffer]       
+        
+        return crop_array
+        
     def main(self):
         try:
             
             # Get info on required tiles
             tiles = get_tile_number(self.bound_box)
             
-            # Convert bounds to 3 arc-second scale
-            bounds = self.hgt_ao_bounds()
+            # Determine bound information
+            s, w, n, e = self.hgt_ao_bounds()  
             
+            # Get tile 'axis' info
+            self.ns_tiles = range(s[0], n[0] + 1)
+            self.ew_tiles = range(w[0], e[0] + 1)
+        
+            # Determine data-set size for all tiles      
+            self.ns_size = self.hgt_size*len(self.ns_tiles) - 1*(len(self.ns_tiles) - 1)
+            self.ew_size = self.hgt_size*len(self.ew_tiles) - 1*(len(self.ew_tiles) - 1)
+                      
             # Switch to store directory
             os.chdir(self.img_path)
             
-            for i in range(0,len(tiles)):
-                
-                # Pass hgt data into a numpy array
-                hgt_array = self.hgt_to_nparray(tiles[i])
-                
-                # Crop hgt file to AO
-                crop_array = self.crop_to_ao(bounds, hgt_array)
-                
-                # Save the array into a npy file
-                np.save(self.img_name_sub, crop_array)
+            # Merge relevant hgtdata sets
+            merged_hgts = self.merge_hgt_data(s, w, n, e)
+            
+            # Crop hgt data set
+            ao_array = self.crop_np_array(s, w, n, e, merged_hgts)
+            
+            # Visalize data
+            #array_to_png(merged_hgts, 'hgt')
+            #array_to_png(ao_array, self.img_name_sub)
+              
                 
         finally:
             
