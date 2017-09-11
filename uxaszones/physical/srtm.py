@@ -16,7 +16,7 @@ from files import get_tile_number, get_file_name
 class RetrieveSRTMData():
     
     def __init__(self):
-        
+
         # Get cwd
         self.setdir = os.getcwd()
         
@@ -24,8 +24,8 @@ class RetrieveSRTMData():
         self.img_path = sys.argv[1]
         self.img_name_sub = sys.argv[2]
         self.abs_path = sys.argv[3]
-        self.bound_box = (39.067176, -84.558347, 39.139042, -84.465692) #input('Input AO geodetic bounds: (south, west, north, east): ')
-        
+        self.bound_box = (float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6]), float(sys.argv[7])) #(39.067176, -84.558347, 39.139042, -84.465692)
+
         # Switch to store directory
         os.chdir(self.img_path)
         
@@ -48,13 +48,13 @@ class RetrieveSRTMData():
             (tile[0] >= 30 and -170 <= tile[1] <= -150) or
             tile == (10, -110)):
                 
-            return 'North_America'
+            return "North_America"
                 
         # South America
         elif ((-53 <= tile[0] < 15 and -93 <= tile[1] <= -33) or
             (tile[0] < -53 and -76 <= tile[1] <= -64)):
                 
-            return 'South_America'
+            return "South_America"
             
         # Eurasia
         elif ((tile[0] >= 35 and -14 <= tile[1] <= 179) or
@@ -63,49 +63,55 @@ class RetrieveSRTMData():
             (-10 <= tile[0] <= 10 and -180 <= tile[1] < -135) or
             (51 <= tile [0] <= 60 and -180 <= tile[1] < -170)):
                 
-            return 'Eurasia'
+            return "Eurasia"
             
         # Africa
         elif ((tile[0] >= 0 and -32 <= tile[1] < 60) or
             (0 > tile[0] >= -35 and 5 <= tile[1] <= 63) or
             (45 >= tile[0] > 40 and -35 <= tile[1] <= -20)):
                 
-            return 'Africa'
+            return "Africa"
             
         # Australia
         elif ((-45 <= tile[0] < -10 and 110 < tile[1] < 160) or 
             (-25 <= tile[0] < -10 and 160 <= tile[1] < 179) or
             (-28 <= tile[0] < -10 and -180 <= tile[1] < -105)):
                 
-            return 'Australia'
+            return "Australia"
             
         # Other
         else:
-            return 'Islands'
+            return "Islands"
         
     #FIND DESIRED STRM3 90m TILE SET LOCATION FOR ONLINE SOURCE
     def determine_url(self, tile):
               
-        url_stub = 'https://dds.cr.usgs.gov/srtm/version2_1/SRTM3/'
+        url_stub = "https://dds.cr.usgs.gov/srtm/version2_1/SRTM3/"
         
         # Determine continent
         continent = self.determine_continent(tile)
         
         # Build url
-        file_name = get_file_name(tile) + '.hgt.zip'
-        url = url_stub + continent + '/' + file_name 
+        file_name = get_file_name(tile) + ".hgt.zip"
+        url = url_stub + continent + "/" + file_name 
         
         return url, file_name
 
     #RETRIEVE HGT.ZIP FILE FROM ONLINE SOURCE
     def retrieve_map(self, url):
-        
-        # Open URL destination
-        u = urllib2.urlopen(url)
-        
-        # Read .zip file and write to store path
-        with open(os.path.basename(url), 'wb') as local_file:
-            local_file.write(u.read())
+        try:
+            
+            # Open URL destination
+            u = urllib2.urlopen(url)
+            
+            # Read .zip file and write to store path
+            with open(os.path.basename(url), 'wb') as local_file:
+                local_file.write(u.read())
+                
+        except:
+
+            # Assume file does not exist because it is an ocean tile (need to test)
+            print("Couldn't find {}; assuming ocean tile\n".format(url))
             
     #UNZIP HGT FILE 
     def unzip_map(self, file_name):
@@ -131,7 +137,9 @@ class RetrieveSRTMData():
                 
                 # Download and extract the .hgt file from the online source
                 self.retrieve_map(url)
-                self.unzip_map(file_name)
+                
+                if os.path.isfile(file_name):
+                    self.unzip_map(file_name)
             
         finally:
             

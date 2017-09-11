@@ -12,7 +12,7 @@ import sys
 import numpy as np
 
 from files import get_tile_number, get_file_name
-#from visualization import array_to_png
+from visualization import array_to_png
 
 
 class GetElevationData():
@@ -26,7 +26,7 @@ class GetElevationData():
         self.img_path = sys.argv[1]
         self.img_name_sub = sys.argv[2]
         self.abs_path = sys.argv[3]
-        self.bound_box = (39.067176, -84.558347, 39.139042, -84.465692)#input('Input AO geodetic bounds: (south, west, north, east): ') 
+        self.bound_box = (float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6]), float(sys.argv[7])) #(39.067176, -84.558347, 39.139042, -84.465692) 
         
         # File Properties
         self.hgt_size = 1201
@@ -67,9 +67,13 @@ class GetElevationData():
         # Get file name
         file_name = get_file_name(tile) + '.hgt'
         
-        # Read data from the hgt file into a numpy array, accounting for the file's big-endianess
-        hgt_data = np.fromfile(file_name, dtype = '>i2').reshape((self.hgt_size, self.hgt_size))
-        
+        if os.path.isfile(file_name):
+            # Read data from the hgt file into a numpy array, accounting for the file's big-endianess
+            hgt_data = np.fromfile(file_name, dtype = '>i2').reshape((self.hgt_size, self.hgt_size))
+        else:
+            # Create array of zero values (assumes srtm.py couldn't find anything and tile is likely to be an ocean tile)
+            hgt_data = np.zeros((self.hgt_size, self.hgt_size))
+    
         return hgt_data
 
     #MERGE ALL RELEVANT DATA SETS
@@ -138,9 +142,9 @@ class GetElevationData():
             # Crop hgt data set
             ao_array = self.crop_np_array(s, w, n, e, merged_hgts)
             
-            # Visalize data
-            #array_to_png(merged_hgts, 'hgt')
-            #array_to_png(ao_array, self.img_name_sub)
+            # Visualize data
+            array_to_png(merged_hgts, 'hgt')
+            array_to_png(ao_array, self.img_name_sub)
               
                 
         finally:

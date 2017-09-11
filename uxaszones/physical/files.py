@@ -43,7 +43,12 @@ def get_file_name(tile):
     lon = abs((tile[1]))
         
     # Construct file name
-    file_name = lat_dir + str(lat) + lon_dir + '0' + str(lon)
+    
+    if (lon < 100):
+        file_name = lat_dir + str(lat) + lon_dir + '0' + str(lon)
+    else:
+        file_name = lat_dir + str(lat) + lon_dir + str(lon)
+    
     
     return file_name
     
