@@ -145,7 +145,9 @@ class GetElevationData():
             # Visualize data
             array_to_png(merged_hgts, 'hgt')
             array_to_png(ao_array, self.img_name_sub)
-              
+            
+            # Output data to npy file
+            np.save(self.img_name_sub, ao_array)           
                 
         finally:
             
