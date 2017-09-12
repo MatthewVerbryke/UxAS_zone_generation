@@ -24,10 +24,9 @@ class RetrieveAODataSRTM3():
         self.setdir = os.getcwd()
         
         # Command line arguments
-        self.img_path = sys.argv[1]
-        self.img_name_sub = sys.argv[2]
-        self.abs_path = sys.argv[3]
-        self.bound_box = (float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6]), float(sys.argv[7]))
+        self.store_path = sys.argv[1]
+        self.scen_name = sys.argv[2]
+        self.bound_box = (float(sys.argv[3]), float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6]))
 
         # URL stub
         self.url_stub = "https://dds.cr.usgs.gov/srtm/version2_1/SRTM3/"
@@ -164,7 +163,7 @@ class RetrieveAODataSRTM3():
             
             # Extract .hgt file from .zip file and place it in the store path
             zip_ref = zipfile.ZipFile(zip_name, "r")
-            zip_ref.extractall(self.img_path)
+            zip_ref.extractall(self.store_path)
         
             # Close and delete .zip file
             zip_ref.close()
@@ -242,7 +241,7 @@ class RetrieveAODataSRTM3():
             self.ew_size = self.hgt_size*len(self.ew_tiles) - 1*(len(self.ew_tiles) - 1)
             
             # Switch to store directory
-            os.chdir(self.img_path)
+            os.chdir(self.store_path)
             
             # Merge relevant hgtdata sets
             merged_hgts = self.merge_hgt_data(s, w, n, e)
@@ -252,10 +251,10 @@ class RetrieveAODataSRTM3():
             
             # Visualize data
             array_to_png(merged_hgts, 'hgt')
-            array_to_png(ao_array, self.img_name_sub)
+            array_to_png(ao_array, self.scen_name)
             
             # Output data to npy file
-            np.save(self.img_name_sub, ao_array)           
+            np.save(self.scen_name, ao_array)           
                 
         finally:
             
