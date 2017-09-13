@@ -15,10 +15,9 @@ from PIL import Image
 
 
 #CONVERT A NUMPY ARRAY INTO A PNG FOR VISUALIZATION PURPOSES
-def array_to_png(np_array, img_name):
+def array_to_png(np_array, img_name, rescale):
     
     try:
-        
         # Determine dimensions of the numpy array
         width, height = np_array.shape
 
@@ -28,18 +27,23 @@ def array_to_png(np_array, img_name):
         # 'Flatten' the input array
         np_flat = np_array.flatten()
         
-        # Filter out data errors
-        for i in range(0,len(np_flat)):
-            if (np_flat[i] == -32768):
-                np_flat[i] = 0
+        # Rescale if input 'rescale' is True
+        if rescale:
+            # Filter out data errors
+            for i in range(0,len(np_flat)):
+                if (np_flat[i] == -32768):
+                    np_flat[i] = 0
+            
+            # Determine scaling factor to 'uint8'
+            max_img = max(np_flat)
+            min_img = min(np_flat)
+            scale_factor = 255.0/(max_img - min_img)
         
-        # Determine scaling factor to 'uint8'
-        max_img = max(np_flat)
-        min_img = min(np_flat)
-        scale_factor = 255.0/(max_img - min_img)
-        
-        # Multiply all values by scale_factor
-        img_list = scale_factor*(np_flat - min_img)
+            # Multiply all values by scale_factor
+            img_list = scale_factor*(np_flat - min_img)
+            
+        else:
+            img_list = np_flat
                     
         # Save data to png file
         img.putdata(img_list)

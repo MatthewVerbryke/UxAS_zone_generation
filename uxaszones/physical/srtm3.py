@@ -25,7 +25,7 @@ class RetrieveAODataSRTM3():
         
         # Command line arguments
         self.store_path = sys.argv[1]
-        self.scen_name = sys.argv[2]
+        self.scenario_name = sys.argv[2]
         self.bound_box = (float(sys.argv[3]), float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6]))
 
         # URL stub
@@ -250,11 +250,11 @@ class RetrieveAODataSRTM3():
             ao_array = self.crop_np_array(s, w, n, e, merged_hgts)
             
             # Visualize data
-            array_to_png(merged_hgts, 'hgt')
-            array_to_png(ao_array, self.scen_name)
+            array_to_png(merged_hgts, 'hgt', True)
+            array_to_png(ao_array, self.scenario_name, True)
             
             # Output data to npy file
-            np.save(self.scen_name, ao_array)           
+            np.save(self.scenario_name, ao_array)           
                 
         finally:
             
