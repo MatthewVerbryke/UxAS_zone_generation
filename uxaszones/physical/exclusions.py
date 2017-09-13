@@ -54,6 +54,35 @@ class GenerateExclusionAreas():
         array_to_png(new_array, '{}_obstructions'.format(ID), False)
         
         return new_array
+    
+    # ADD BORDER TO EACH OBSTRUCTION MAP
+    def add_border(self, img_name):
+        
+        try:
+            
+            # Open the image
+            img = Image.open(img_name)
+
+            # Get image size
+            width, height = img.size
+
+            # Determine size needed for one pixel border
+            width_wb = width + 2
+            height_wb = height + 2
+            
+            # Create new empty image for bordered image
+            img_border = Image.new('L', [width_wb, height_wb])
+
+            # Paste the old image in the center of the empty new one
+            img_border.paste(img, (1, 1))
+
+            # Save this bordered image
+            img_border.save(img_name)
+            
+        finally:
+            
+            # Close image
+            img.close()
 
     # MAIN LOOP
     def main(self):
@@ -79,6 +108,9 @@ class GenerateExclusionAreas():
                 
                 # Iterate through uav list to determine terrian obstructions
                 obstruct_array = self.determine_exclusions(sorted_uavs[i][1], heights, int(sorted_uavs[i][0]))
+                
+                # Add border to png
+                self.add_border('{}_obstructions.png'.format(int(sorted_uavs[i][0])))
                 
                 # Determine scale for combining obstruction maps
                 scale_h = int(255/uav_num)*(i+1)

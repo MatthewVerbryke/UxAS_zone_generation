@@ -20,20 +20,18 @@ def array_to_png(np_array, img_name, rescale):
     try:
         # Determine dimensions of the numpy array
         width, height = np_array.shape
-
-        # Create new image of type 8-bit unsigned integer (uint8)
-        img = Image.new('L', (height, width))
         
         # 'Flatten' the input array
         np_flat = np_array.flatten()
         
+        # Filter out data errors
+        for i in range(0,len(np_flat)):
+            if (np_flat[i] == -32768):
+                np_flat[i] = 0
+                    
         # Rescale if input 'rescale' is True
         if rescale:
-            # Filter out data errors
-            for i in range(0,len(np_flat)):
-                if (np_flat[i] == -32768):
-                    np_flat[i] = 0
-            
+                        
             # Determine scaling factor to 'uint8'
             max_img = max(np_flat)
             min_img = min(np_flat)
@@ -44,9 +42,14 @@ def array_to_png(np_array, img_name, rescale):
             
         else:
             img_list = np_flat
-                    
-        # Save data to png file
+            
+        # Create new image of type 8-bit unsigned integer (uint8)
+        img = Image.new('L', (height, width))
+            
+        # Put data into png
         img.putdata(img_list)
+               
+        # Save data to png file
         img.save('{}.png'.format(img_name))
 
     finally:
