@@ -1,5 +1,9 @@
 # UxAS Zone Generator
 
+## NOTE:
+
+"functional" branch is the version of this program that existed at the end of the summer. It is currently the only functional branch of the program, so use it until "master" is finished.
+
 ## Summary
 
 This repository contains a program that can be used to automatically generate zones, based on given heightmaps, geographic information, and vehicle data, for [AFRL-RQ](http://www.wpafb.af.mil/afrl/rq/)'s Unmanned Systems Autonomy Services (UXAS) architecture. The program will use the given inputs to determine the obstructions for each UAV (based on altitude), perform raster-to-vector conversion to generate polygons of these areas, and use polygon manipulation to create and output buffered polygonal zones in the appropriate format for UxAS to use.  Also provided as an output are images and figures that are intended to allow the user to confirm that the output is correct.
