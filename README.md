@@ -1,6 +1,6 @@
 # UxAS Zone Generator
 
-# Currently overhauling the code for automated input; This build does not work!
+# Currently overhauling the code for automated input; This build does not work! Try the 'Functional' branch.
 
 ## License
 
