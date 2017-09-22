@@ -20,7 +20,7 @@ class UAV(object):
         restrict --     filename containing the regulatory-restriction map (NOT IMPLEMENTED YET)
         threat --       filename containing the threat-level map (NOT IMPLEMENTED YET)
         comms --        filename containing the threat-level map (NOT IMPLEMENTED YET)
-        zone_list --    list of IDs for all zones relevent to the UAV (list of strings)
+        zone_list --    list of IDs for all zones relevant to the UAV (list of strings)
     
     """
     
@@ -34,3 +34,6 @@ class UAV(object):
         
         # Determine minimum turning radius
         self.turn_radius = (self.speed**2)/(9.81*tan(radians(self.bank_angle)))
+
+
+#EOF

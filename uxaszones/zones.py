@@ -7,41 +7,48 @@
 import numpy as np
 
 
-class Zone:
+class Zone(object):
     """Common object class for all zones
     
-    #----Parameters----#
-    ID --           unique identification number of the zone (int)
-    ztype --        characteristic type and permissablity:
+    Attributes:
+        ID --           unique ID of the zone (string)
+        uav --          ID of the relevant UAV(string)
+        ztype --        characteristic type and permissablity:
     
                         Phys  Reg   Thr   Comm
-                        [int , int , int , int ]
+                        [int , int , int , int]
                         
                         where
                         0 - Entry (no characteristic)
                         1 - Entry (characteristic)
                         2 - No Entry
                         
-    bound --        list of boundary points (list of float 2-tuples)  
-    alt --          zone altitude (float)
+        bound --        list of boundary points (list of float 2-tuples)  
+        alt_range --    zone altitude range, min to max ([float, float])
+        buff --         required buffer size for keep-out zones
 
     """
     
-    def __init__(self, ID, ztype, uav_ID, bound_points):
+    zone_count = 0
+    max_verts = 64
+    
+    def __init__(self, uav, uav_alt, uav_buffer, ztype, bound_points, increment):
         
-        # Input parameters
-        self.ID = ID
+        # Increment count if increment == True
+        if increment:
+            Zone.zone_count += 1
+        
+        # Input Parameters
+        self.uav = uav
+        self.buff = uav_buffer
         self.ztype = ztype
         self.bound = bound_points
         
-        # UAV inputs
-        uav_data = np.load('uav.npy')
-        [row] = np.where(uav_data == uav_ID)[0]
-
-        self.alt = uav_data[row, 1]
-        uav_speed = uav_data[row, 2]
-        uav_bank_angle = uav_data[row, 3]
-
-        # Other
-        self.max_verts = 64
-    
+        # Determine ID
+        self.ID = uav + str(zone_count)
+        
+        # Determine altitude range
+        self.alt_range = [uav_alt, uav_alt + 30.0] #<-- the value 30.0 is arbitrary for now
+        
+        
+#EOF
