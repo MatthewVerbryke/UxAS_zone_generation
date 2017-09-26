@@ -25,6 +25,7 @@ class UAV(object):
     """
     
     def __init__(self, ID, airspeed, altitude, max_bank_angle):
+        """Create instance of a UAV object"""
         
         # Input attirbutes
         self.ID = ID
@@ -34,6 +35,22 @@ class UAV(object):
         
         # Determine minimum turning radius
         self.turn_radius = (self.speed**2)/(9.81*tan(radians(self.bank_angle)))
-
+        
+        # Construct mapnames
+        self.obstruct = ID + '_obstructions.png'
+        
+        # Initialize zone list
+        self.zone_list = []
+        
+    def display_info(self):
+        """ Output UAV information to the terminal."""
+        
+        print("UAV {self.ID}\n"
+              "\n"
+              "  airspeed:               {self.speed} m/s\n"
+              "  altitude:               {self.alt} m\n"
+              "  maximum bank angle:     {self.bank_angle} deg\n"
+              "  minimum turning radius: {self.turn_radius} m\n"
+              "\n".format(self=self))
 
 #EOF
