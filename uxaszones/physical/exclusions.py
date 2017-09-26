@@ -1,14 +1,8 @@
-#!/usr/bin/env python
 # Copyright 2017 University of Cincinnati
 # All rights reserved. See LICENSE file at:
 # https://github.com/MatthewVerbryke/uxas_zone_generation
 # Additional copyright may be held by others, as reflected in the commit history.
 
-
-import csv
-import os
-import string
-import sys
 
 import PIL
 from PIL import Image
@@ -17,118 +11,59 @@ import numpy as np
 from visualization import array_to_png
 
 
-class GenerateExclusionAreas():
+def add_border(img_name):
+    """Add a 1-pixel boundary around the edge of an obstruction image (for zone generation later)."""
     
-    def __init__(self):
+    try:
         
-        # Get cwd
-        self.setdir = os.getcwd()
+        # Open the image
+        img = Image.open(img_name)
         
-        # Command line arguments
-        self.store_path = sys.argv[1]
-        self.scenario_name = sys.argv[2]
-        self.bound_box = (float(sys.argv[3]), float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6]))
+        # Get image size
+        width, height = img.size
         
-        # Run main program
-        self.main()
+        # Determine size needed for one pixel border
+        width_wb = width + 2
+        height_wb = height + 2
+        
+        # Create new empty image for bordered image
+        img_border = Image.new('L', [width_wb, height_wb])
+        
+        # Paste the old image in the center of the empty new one
+        img_border.paste(img, (1, 1))
+        
+        # Save this bordered image
+        img_border.save(img_name)
+        
+    finally:
+        
+        # Close image
+        img.close()
+
+def generate_exclusions_areas(uav, alt, heights):
+    """Create a PNG map of the terrain obstructions at a UAV's altitude."""       
     
-    # DETERMINE TERRAIN EXCLUSIONS AT THE PROVIDED UAV'S ALTITUDE
-    def determine_exclusions(self, alt, heights, ID):
-        
-        # Create blank array to hold exclusion array
-        height_size = np.shape(heights)
-        new_array = np.zeros(height_size)
-        
-        # Set value to max in new array if terrain height is greater than altitude
-        new_array[heights >= alt] = 255
-        
-        # Check that the entire map at altitude is not convered by obstructions
-        check_array = np.zeros(height_size)
-        check_array.fill(255)
-        
-        if np.array_equal(new_array, check_array):
-            print("Error: UAV {} has an altitude below the lowest elevation on the map.".format(ID))
-            exit()
-        
-        # Output new array to PNG
-        array_to_png(new_array, '{}_obstructions'.format(ID), False)
-        
-        return new_array
+    # Create blank array to hold exclusion array
+    height_size = np.shape(heights)
+    new_array = np.zeros(height_size)
     
-    # ADD BORDER TO EACH OBSTRUCTION MAP
-    def add_border(self, img_name):
+    # Set value to 8-bit uint max in new array if terrain height is greater than uav altitude
+    new_array[heights >= alt] = 255
+    
+    # Check that the entire map at altitude is not convered by obstructions
+    check_array = np.zeros(height_size)
+    check_array.fill(255)
+    
+    # TODO: handle this better
+    if np.array_equal(new_array, check_array):
+        print("Error: UAV {} has an altitude below the lowest elevation on the map.".format(uav))
+        exit()
+    
+    # Output new array to PNG
+    array_to_png(new_array, '{}_obstructions'.format(uav), False)    
         
-        try:
-            
-            # Open the image
-            img = Image.open(img_name)
-
-            # Get image size
-            width, height = img.size
-
-            # Determine size needed for one pixel border
-            width_wb = width + 2
-            height_wb = height + 2
-            
-            # Create new empty image for bordered image
-            img_border = Image.new('L', [width_wb, height_wb])
-
-            # Paste the old image in the center of the empty new one
-            img_border.paste(img, (1, 1))
-
-            # Save this bordered image
-            img_border.save(img_name)
-            
-        finally:
-            
-            # Close image
-            img.close()
-
-    # MAIN LOOP
-    def main(self):
-        
-        try:
-            
-            # Switch to store directory
-            os.chdir(self.store_path)
-            
-            # Get terrain info
-            heights = np.load("{}.npy".format(self.scenario_name))
-            
-            # Get UAV info
-            uavs = np.load("uav.npy")
-            uav_num, foo = np.shape(uavs)
-            
-            # Sort altitudes min --> max
-            sorted_uavs = sorted(uavs, key=lambda uav: uav[1])
-            
-            all_array = np.zeros(np.shape(heights))
-            
-            for i in range(0,uav_num):
-                
-                # Iterate through uav list to determine terrian obstructions
-                obstruct_array = self.determine_exclusions(sorted_uavs[i][1], heights, int(sorted_uavs[i][0]))
-                
-                # Add border to png
-                self.add_border('{}_obstructions.png'.format(int(sorted_uavs[i][0])))
-                
-                # Determine scale for combining obstruction maps
-                scale_h = int(255/uav_num)*(i+1)
-        
-                # Add obstructions to all_obstructions visualization
-                all_array[obstruct_array == 255] = scale_h
-                
-            # Output all array to PNG
-            array_to_png(all_array, 'all_obstructions', False)
-                
-        finally:
-            
-            # Switch back to the cwd
-            os.chdir(self.setdir)
-            
-            
-if __name__ == "__main__":
-    GenerateExclusionAreas()
+    # Add border to png
+    add_border('{}_obstructions.png'.format(uav))
     
     
 #EOF
