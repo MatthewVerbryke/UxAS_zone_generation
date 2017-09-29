@@ -1,6 +1,6 @@
 <KeepOutZone Series="CMASI">
   <ZoneType>$ZONETYPE$</ZoneType>
-  <ZoneID>$ZONENUMBER$</ZoneID>
+  <ZoneID>$ZONEID$</ZoneID>
   <MinAltitude>$ALTMIN$</MinAltitude>
   <MinAltitudeType>MSL</MinAltitudeType>
   <MaxAltitude>$ALTMAX$</MaxAltitude>

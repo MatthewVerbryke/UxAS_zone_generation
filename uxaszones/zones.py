@@ -4,8 +4,8 @@
 # Additional copyright may be held by others, as reflected in the commit history.
 
 
-#import numpy as np
 from shapely.geometry import Polygon, MultiPoint
+import string
 
 
 class Zone(object):
@@ -105,6 +105,39 @@ class Zone(object):
         
         # Update the bound to the simple boundary
         self.bound = simple_bound
+        
+    def output_to_uxas(self, file_template, point_template):
+        """Create a new CMASI-style KeepOutZone XML file for use with UxAS"""
+        
+        point_store = ""
+        
+        # Put boundary points into a list
+        bound_point_list = list(self.bound.exterior.coords)
+        
+        point_total = len(bound_point_list)
+        
+        # Fill in point information
+        for i in range(0,point_total):
+            point_data = str(point_template);
+            point_data = point_data.replace( "$LATITUDE$", str(bound_point_list[i][0]))
+            point_data = point_data.replace( "$LONGITUDE$", str(bound_point_list[i][1]))
+            point_store += str(point_data)
+        
+        # Fill in zone infromation
+        file_info = str(file_temp)
+        file_info = file_info.replace( "$ZONETYPE$", 'Physical') #TODO: Can multiple types be put here?
+        file_info = file_info.replace( "$ZONENUMBER$", str(self.ID))
+        file_info = file_info.replace( "$ALTMIN$", str(self.alt_range[0]))
+        file_info = file_info.replace( "$ALTMAX$", str(self.alt_range[1]))
+        file_info = file_info.replace( "$POLYPOINTS$", str(point_store))
+        file_content = str(file_info)
+                
+        file_name = 'KeepOutZone_{}.xml'.format(self.ID)
+        
+        # Write all data into the file
+        with open(file_name, 'w+') as f:
+            f.write(file_content)
+            f.close()
             
     def display_info(self):
         """Output zone information to the terminal."""
