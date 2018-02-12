@@ -37,6 +37,18 @@ def eliminate_internal_polygons(polys_in):
             polys_out.append(polys_in[i])
     
     return polys_out
+    
+def buffer_polygons(polys_in, buff):
+    """ """
+    
+    poly_num = len(polys_in)
+    polys_out = [None]*poly_num
+    
+    # buffer polygons
+    for i in range(0,poly_num):
+        polys_out[i] = polys_in[i].buffer(buff)
+        
+    return polys_out
 
 def merge_overlapping_polygons(polys_in):
     """Merge all overlapping polygons in the input list"""
@@ -51,7 +63,7 @@ def merge_overlapping_polygons(polys_in):
         
         # Set variables for current loop
         merges = 0
-        polys_merged = {False]*poly_total
+        polys_merged = [False]*poly_total
         polys_union = []
         polys_total = len(polys_temp)
         
@@ -60,21 +72,21 @@ def merge_overlapping_polygons(polys_in):
             # If the polygon i has not already been found to overlap anothe one and merged
             if not poly_merged[i]:
                 
-            for j in range(0,polys_total):
-                
-                # If polygon i overlaps polygon j and they are not the same polygon
-                if (polys_temp[i].intersect(polys_temp[j])) and (i != j):
+                for j in range(0,polys_total):
                     
-                    # Merge j with i and count j as having been merged (will no longer be considered
-                    polys_union.append(polys_temp[i].union(polys_temp[j]))
-                    polys_merged[j] = True
-                    
-                    # Increment the number of merges in this loop
-                    merges += 1
-                    
-                else:
-                    pass
-    
+                    # If polygon i overlaps polygon j and they are not the same polygon
+                    if (polys_temp[i].intersect(polys_temp[j])) and (i != j):
+                        
+                        # Merge j with i and count j as having been merged (will no longer be considered)
+                        polys_union.append(polys_temp[i].union(polys_temp[j]))
+                        polys_merged[j] = True
+                        
+                        # Increment the number of merges in this loop
+                        merges += 1
+                        
+                    else:
+                        pass
+        
         # Set the output of this loop to the input of the next loop
         polys_temp = polys_union
         
@@ -99,7 +111,7 @@ def check_polygons(polys_in):
             if (i == j):
                 pass
             else:
-                polys_intersect[i][j] = polys_in[i].intersects(polys_in[j]))
+                polys_intersect[i][j] = polys_in[i].intersects(polys_in[j])
             
         # Get the number of points in polygon i
         point_number = len(list(polys_in(i).exterior.coords))
