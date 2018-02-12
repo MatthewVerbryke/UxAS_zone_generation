@@ -6,26 +6,37 @@
 
 from math import pi, sin, cos, radians, sqrt
 
+from shapely.geometry import Polygon
 
-def pixel_to_geodetic(lat_low, lon_low, zone_bound, pix_to_geo):
-    """Convert a boundary point list from 'pixel' coordinates to geodetic coordinates."""
+
+def pixel_to_geodetic(polys_in, lat_low, lon_low):
+    """Convert a boundary point list from 'pixel' coordinates to geodetic coordinates.
+    TODO: Something is off on the scale part, figure it out"""
     
-    # Convert bound polygon to point list
-    bound_point_list = list(zone_bound.exterior.coords)
+    # In SRTM3 data, one pixel is 3 archseconds
+    # NOTE: if physical source changes, this conversion factor no longer works
+    pix_to_geo = 1.0/1201.0
     
-    point_total = len(bound_point_list)
-    geo_point_list = [None]*point_total
+    poly_num = len(polys_in)
+    polys_out = [None]*poly_num
     
-    # Convert each point
-    for i in range(0,point_total):
-        lat = bound_point[i][1]*pix_to_geo + lat_low
-        lon = bound_point[j][0]*pix_to_geo + lon_low
-        geo_point_list[i] = (lat, lon)
+    for i in range(0,poly_num):
         
-    # Place new list into Shapely polygon
-    converted_bound = Polygon(geo_point_list)
-    
-    return converted_bound
+        poly_outline = list(polys_in[i].exterior.coords)
+        point_total = len(poly_outline)
+        geo_point_list = [None]*point_total
+        
+        # Convert each point
+        for j in range(0,point_total):
+            
+            lat = poly_outline[j][1]*pix_to_geo + lat_low
+            lon = poly_outline[j][0]*pix_to_geo + lon_low
+            geo_point_list[j] = (lat, lon)
+            
+        # Place new list into Shapely polygon
+        polys_out[i] = Polygon(geo_point_list)
+        
+    return polys_out
     
 def local_to_geodetic(local_len, lat_low, lat_high):
     """For the AO location, convert meters to geodetic coordinates."""
@@ -50,7 +61,7 @@ def local_to_geodetic(local_len, lat_low, lat_high):
 
         # Length of 1 degree of latitude (meters) as a function of latitude
         lat_len[i] = 111132.954 - 559.822*cos(2*latr) + 1.175*cos(4*latr)
-    
+        
         # Length of 1 degree of longitude (meters) as a function of latitude
         lon_len[i] = (pi*a*cos(latr))/(180*sqrt(1.0-e2*(sin(latr))**2))
         
@@ -58,13 +69,12 @@ def local_to_geodetic(local_len, lat_low, lat_high):
     deg_per_meter = (1./lat_len[1], 1./lat_len[0], 1./lon_len[1], 1./lon_len[0])
     
     # Pick the largest value 
-    output = max(deg_per_meter) 
+    output = max(deg_per_meter)*local_len
     # NOTE: this is done because this function is only used to determine
     #       the buffer in geodetic coordinates, and since only one buffer
     #       length can be used, the safest option is to pick the largest 
     #       buffer
     # TODO: see if there is a better way to do this
-    
     return output
 
 
