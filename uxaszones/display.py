@@ -21,11 +21,11 @@ def print_polygons(polys_in, color):
     for i in range(0,poly_num):
         
         # Convert polygon bound to numpy array
-        poly_outline = list(polys_in[i].bound.exterior.coords)
+        poly_outline = list(polys_in[i].exterior.coords)
         poly_outlines = np.array(poly_outline)
         
-        # Plot polygon with correct orientation
-        plt.plot(poly_outlines[:,0], poly_outlines[:,1], color)
+        # Plot polygon with correct orientation (north along y-axis, east along x-axis)
+        plt.plot(poly_outlines[:,1], poly_outlines[:,0], color)
         
 def plot_to_google_maps(zone_list, ao_bound, uav_ID, img_path, check):
     """Create a google map HTML file to visualize the zones on a real-world map"""
